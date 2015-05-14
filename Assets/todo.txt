@@ -1,0 +1,97 @@
+GUI sizing/scaling
+	http://unity3d.com/learn/tutorials/modules/beginner/ui/rect-transform
+
+
+draw a line from click down to current
+
+groups follow path while it is being drawn and paths to stop when it hits a wall
+
+remove persistent hover
+
+singleton groups?
+	or subset groups in general
+		if a selection starts and ends inside a unit group, select the subset
+		if the selection leaves the group, it is a path to be followed
+		
+			this is a bit awkward, actually	
+	should new units be singleton groups?
+	should singletons have group indicators/hotkeys?
+
+group 'colors' and overlay buttons for each color - overlay button moves camera to the group
+	try to reuse colors in case a group is accidentally disbanded/merged
+		(of hover, take most common colorID that will be available and reuse)
+		
+obstacle avoidance, "flocking", queueing
+
+HUD:
+	selection abilities / trainable units / warpin
+	selection group buttons
+	minimap
+	scrolling
+	health bars
+
+Camera movement
+
+buildings
+	dynamic navmesh - excluding buildings/walls?
+	(unity has some 3d navmesh code)
+
+unit AI / autocast abilities for combat (some auto positioning too, if left idle)
+
+
+possibilities:
+	2 finger tap to select (a circle)
+		have selection circle fade over a few seconds
+	2 finger pinch to zoom
+	2 finger drag to pan
+	1 finger drag to zoom
+	1 finger drag to select
+	1 finger drag from a group to instruct
+	tap to select a group
+	tap to form singleton
+	tap to move selection
+	tap to recenter camera
+	drag from building for commands
+	tap and hold to set unit group, tap to select, double tap to go to
+	on screen buttons:
+		info, center cam
+	edge of screen arrows (to units / groups)
+	
+	I think I like the idea of the last used group being selected and tap to move
+	with an alternative shorthand of drag to move an unselected or drag to select or 2f tap to select
+
+squad behaviour:
+	attack move forward, flee backward
+	autokite as ranged vs melee
+	auto spread (line shape) when fighting
+	back up low health units if ranged
+	prioritize low health units (focus fire)
+
+actionMap to return an ID when you add an action rather than taking it as an arg.
+	ArrayList
+	
+Units : face target when shooting, don't change facing direction (or move) during 'animation' duration
+
+todo: pseudo turnrate (if ! animating, turnToward)
+	setAngle on shoot
+
+IDENTICAL dists -> a bug
+unit - neighbours is currently N N log N efficiency (N^2 to make the assoc, and N log N to sort each of the N lists)
+
+HP arcs
+	old builtin shader
+	http://answers.unity3d.com/questions/14770/creating-a-circular-progressbar-timer.html
+	have thicker arc in the alpha image
+	
+	higher res + power of 2
+	a shader for alpha 
+	http://answers.unity3d.com/questions/273680/transparent-cutout-shader.html
+	a shader for a circle
+	http://wiki.unity3d.com/index.php/Procedural_Circle_Mask
+	
+	WORKING:
+		http://answers.unity3d.com/questions/821258/merging-alpha-unlit-shader-with-cutout-shader.html
+		
+update animation durations lookAt to look at moving objects or fixed points instead of fixed durations
+
+figure out how to organize ability/statuses

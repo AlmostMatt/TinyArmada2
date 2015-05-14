@@ -1,0 +1,199 @@
+tiny armada:
+
+tap on a settlement to start/stop trading with it
+
+can still use gestures for more precise controls, overrides, or military units
+
+can have 2 ships trading with 3 cities or 3 ships with 1 city, ships have expected arrival times and try to maximize your income
+    increase in profit / travel time where increase in profit is
+        (expected gold city will have when this ship arrives
+            + expected gold when next ship arrives
+            - expected gold when next ship arrives if this ship hadn't arrived) if there is another ship that will arrive later
+                    (don't want ships to prioritize racing each other)
+        alternatively the closer ship can take the city, and the further ship can re-evaluate
+                    
+control similar to the mine: set destiations, autonomous workers
+
+During combat, gestures to split and move fleets, tap targets for priotization
+
+also mark areas as safe/dangerous for trade ships, so they can prefer the long route and take the route into account with respect to profit
+
+
+
+player motivations:
+    http://www.quora.com/Psychology/What-are-the-different-types-of-psychological-needs-that-game-developers-fulfill-to-make-video-games-fun
+        http://extra-credits.net/episodes/aesthetics-of-play/
+    growth:
+        building more stuff (construct buildings, colonize islands)
+    strategy
+    combat
+    expression ? (if you can customize your fleet or something)
+    sensory: visually pretty
+    abnegation (fun to watch stuff happen during lulls in action)
+    combative
+    
+    out of game:
+        collection 
+        
+    if multiplayer:
+        recognition (ranking)
+        skill
+        competitive
+            could even do mobile multiplayer if the actions are not generally immediate.
+
+    watching boats trade
+     
+
+buildings:
+    regen
+    tower
+    trading
+    looting (steal from other players, destroy neutral cities)
+
+    dock for repairs?
+    shipyard - constructs ships
+    colony - people build settlements -> source of food/wood/coin/stone
+
+ships:
+        health
+        speed
+        can fish
+        cargo capacity
+        attack type/range/damage - bonuses vs buildings
+    siege ships (slow mspeed + aspeed, long range)
+    fishing
+        provides food, aoe2 fish camps or moving schools of fish (maybe fish patrol an area)
+    colony ship -> creates colonies
+    
+
+controls/input:
+    web/mobile (unity)
+    play like 'the mine'
+    
+    - tap colonies to go to and target them
+    - tap enemy ships to attack / chase them
+    - gesture movement for drive by / ships naturally flee when outnumbered or if they have no instruction
+        
+game mechanics:
+    no fog
+    small world (1 screen on pc, 2x2 on mobile)
+    2-4 players
+        ai players that have different mechanics/playstyle than humans (pirates, random harass)
+        reward for eliminating ai (gold, resoruces)
+    
+    ship building / construction / expansion as wheel / buttons near existing buildings
+        (main base has a defensive turret and a repair dock)
+    
+    traders autoflee (pathing to avoid enemies)
+    
+    'trading' ships patrol for income
+        different colonies provide different resource types
+        (varying density / profit)
+        large cities generate gold faster
+    'vikings' loot for resources + sabotage enemies trade
+    'raiding' attempts to move quickly and sink traders
+    
+    early building defenses mitigate rush strats, but raiding workers is effective
+    motivation to trade with distant colonies prevents turtle strategies -> promotes interaction
+        (sc 1-2 base minerals suck, aoe trees and farms suck, earlygame bush gold exploration and aoe3 hero exploration both cool)
+    capturing colonies is similar to spreading creep
+    
+    flow of the game:
+        20s of planning
+        build some ships
+        tap some colonies to trade with (prioritize food)
+        build more traders and a light raiding ship
+        
+        capture some buildings for repairs/defense and harass enemy traders
+            (making a lot of defenses is no fun, aggressive defenses are delicate to balance)
+        change resource priority -> buy tech / upgrades at colony
+        build larger military
+        take some outer colonies by brute force.
+        if standoff, threaten raids
+        use military to get better economy
+        tech further
+        build siege ship
+        begin slow-push into enemy's base
+        all-out fight
+        
+
+    
+visual ref:
+    oil rush https://www.youtube.com/watch?v=q4dPuQ4pw70 http://oilrush-game.com/
+    aoe3 boats
+    east india https://www.youtube.com/watch?v=muJ1Y-X7odE
+    
+visuals:
+    ideally don't need trees
+        but if I use trees, prerender them
+    split hull, sail, and image colors to separate objects for Z sorting
+    visualize trade routes
+    only water is really boring
+    ice + ice breakers -> drifting and cracked sheets of ice look really cool
+        (can be a game mechanic or just visual -> slow the first time you pass through)
+    
+    boats are made of wood and have oars. sails are optional. longboats are cool.
+
+    fish jump out of water
+    aoe3 boats looked really cool but the game wasn't designed around naval combat
+    ships loaded with gold
+    fire after taking damage
+    floating debris from destroyed ships
+    mast/sail fall off of ships
+    
+    recoil and smoke from cannons
+    volleys of arrows from raiders
+    ripples / white water trails
+    animated oars -> more ripples / dynamic turning
+    
+    
+    
+    
+    navmesh / pathing
+    
+        HEIRARCHICAL PATHFINDING
+            http://aigamedev.com/open/review/near-optimal-hierarchical-pathfinding/
+            (nodes are computed and cost to travel between nodes is also precomputed)
+            then total path is pathing done on the large graph + small amount of extra pathing
+            
+        'slow to bake'
+        http://forum.unity3d.com/threads/terravol-volumetric-voxel-terrain-system-dig-holes-caves-in-your-terrains.177573/
+        http://arongranberg.com/astar/features
+        http://aigamedev.com/open/tutorial/lazy-theta-star/
+        http://forum.unity3d.com/threads/dynamic-ai-project-navigation-released.154639/
+        http://forum.unity3d.com/threads/simplepath-advanced-pathfinding-for-any-game-genre-released.89712/
+    
+    
+    update pathing every N frames on frame k mod n
+    buildings have a 'dock' that is on water so that it is reachable, (or two docks)
+    
+    generate mesh for map (plane with texture coordinates)
+            --
+            TRIANGLES (hexagons)
+            then if an entire hex is land, I can have different triangle textures based on what the adjacent hexes are
+            (this could work with squares too. -> 4 triangles)
+            would still need a lot of transition tiles
+        distort some coordinates to make shapes interesting, figure out navmesh similarly.
+        
+        http://answers.unity3d.com/questions/292982/how-to-create-terraindata-at-runtime.html
+        http://answers.unity3d.com/questions/459786/can-you-generate-a-mesh-at-runtime.html
+        http://blog.nobel-joergensen.com/2010/12/25/procedural-generated-mesh-in-unity/
+        
+        (voxel, but seems very relevant and generalizes)
+        http://studentgamedev.blogspot.no/2013/08/unity-voxel-tutorial-part-1-generating.html
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        EXTEND AIR DRAW
+        pen pressure
+        http://www.blackcj.com/blog/2011/12/14/detect-pen-tablet-pressure-with-the-air-3-native-extension/
+        wacom mini http://mini-developer.wacom.eu/SDK.mvc
+        
+        gimp symmetry
+        http://girinstud.io/news/2015/03/symmetry-painting-in-gimp-ready-to-be-merged/
