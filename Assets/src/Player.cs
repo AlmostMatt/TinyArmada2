@@ -25,6 +25,7 @@ public class Player
 	public bool isHuman = false;
 	public bool isNeutral = false;
 	public Dictionary<Resource, float> resources;
+	public Dictionary<Resource, UnityEngine.UI.Text> resourceText;
 
 	public Player (int pnum)
 	{
@@ -52,10 +53,18 @@ public class Player
 		foreach (Resource res in Enum.GetValues(typeof(Resource))) {
 			resources[res] = 0f;
 		}
+		resources[Resource.FOOD] = 100f;
 	}
 	
 	public void collect(Resource res, float amount) {
 		resources[res] += amount;
+		amountChanged(res);
+	}
+
+	private void amountChanged(Resource res) {
+		if (resourceText != null && resourceText.ContainsKey(res)) {
+			resourceText[res].text = resources[res].ToString();
+		}
 	}
 	
 	public bool has(Resource res, float amount) {
@@ -65,6 +74,7 @@ public class Player
 	public bool spend(Resource res, float amount) {
 		if (has(res, amount)) {
 			resources[res] -= amount;
+			amountChanged(res);
 			return true;
 		} else {
 			return false;
@@ -82,5 +92,11 @@ public class Player
 
 	public HashSet<Building> tradeBuildings() {
 		return tradeWith;
+	}
+
+	public void setGUI(UnityEngine.UI.Text[] resText) {
+		resourceText = new Dictionary<Resource, UnityEngine.UI.Text>();
+		resourceText[Resource.FOOD] = resText[0];
+		resourceText[Resource.GOLD] = resText[1];
 	}
 }

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class Scene : MonoBehaviour {
-	
 	public GameObject unitObject;
 	public GameObject tntObject;
 	public Texture2D selectImg;
@@ -21,6 +20,8 @@ public class Scene : MonoBehaviour {
 	public Map map;
 	private static Scene singleton;
 
+	public UnityEngine.UI.Text[] resources;
+
 	// Use this for initialization
 	void Start () {
 		singleton = this;
@@ -32,6 +33,7 @@ public class Scene : MonoBehaviour {
 		for (int i = 0; i <= 4; i++) {
 			players.Add(new Player(i));
 		}
+		players[1].setGUI(resources);
 
 		//map = GetComponent<Map>();
 		map.generateMap(players);
@@ -272,7 +274,7 @@ public class Scene : MonoBehaviour {
 		// Minimap
 		Rect mapRect = new Rect(10,10,100,100);
 		GUI.color = Color.gray;
-		GUI.Button(mapRect, "MiniMap");
+		//GUI.Button(mapRect, "MiniMap");
 
 		// Unit groups
 		//for (int i=0; i<4; ++i) {

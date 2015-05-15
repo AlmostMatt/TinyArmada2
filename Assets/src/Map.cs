@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public enum Tile {WATER=0, SHORE=1, GRASS=2, BUILDING=3};
+public enum Tile {WATER=0, SHORE=1, GRASS=2, BUILDING=3, TEMP=4};
 
 public class Map : MonoBehaviour {
 	public GameObject buildingObject;
@@ -9,7 +9,7 @@ public class Map : MonoBehaviour {
     public GameObject treeObject;
 
     // grid size
-	private int w = 20;
+	private int w = 30;
     private int h = 20;
     private float tileSize = 1f;
 	
@@ -31,7 +31,29 @@ public class Map : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-	
+	/*
+		RandomSet<int> rs = new RandomSet<int>();
+		rs.Add(1);
+		rs.Add(2);
+		rs.Add(3);
+		rs.Add(4);
+		rs.Add(10);
+		rs.Add(11);
+		rs.Add(12);
+		foreach (int x in rs) {
+			Debug.Log("rs contains " + x);
+		}
+		int y = rs.popRandom();
+		Debug.Log("rs POP " + y);
+		foreach (int x in rs) {
+			Debug.Log("rs contains " + x);
+		}
+		HashSet<int> s2 = new HashSet<int>();
+		s2.UnionWith(rs);
+		foreach (int x in s2) {
+			Debug.Log("s2 contains " + x);
+		}
+*/
 	}
 	
 	// Update is called once per frame
@@ -54,23 +76,28 @@ public class Map : MonoBehaviour {
         // or keep track of cycles and only create land where cycles exists
         // or just dig trenches/channels/rivers/bays afterward
 
+		HashSet<Vector2> tempTiles = new HashSet<Vector2>();
+
 		// terrain
-        int numislands = 15;
-        int numland = (int) (10f/(tileSize*tileSize)); // island area
+		int numislands = 10;//15;
+		int islandSizeMin = 3;
+		int islandSizeMax = 18;
         int treeDensity = 4;
+		int numcolonies = 20;
         //Random.seed = 
         System.Random rnd = new System.Random();
         int i = 0;
         while (i < numislands) {
             int x = Random.Range(1,w-1);
             int y = Random.Range(1,h-1);
-            if (isGround(getTile (x,y))) { continue; }
+            if (!isWater(getTile (x,y))) { continue; }
 
             // a set of water values that could be made into land
             RandomSet<Vector2> adjacentWater = new RandomSet<Vector2>(rnd);
             adjacentWater.Add(new Vector2(x,y));
 
-            for (int n = 1; n < numland && adjacentWater.Count > 0; n++) {
+			int numland = Random.Range(islandSizeMin, islandSizeMax + 1);
+            for (int n = 0; n < numland && adjacentWater.Count > 0; n++) {
                 Vector2 randTile = adjacentWater.popRandom();
                 setTile(randTile, Tile.GRASS);
                 for (int tr=0; tr<treeDensity; ++tr) {
@@ -82,18 +109,57 @@ public class Map : MonoBehaviour {
                     tree.transform.localScale = new Vector3(sz, sz, 1f);
                 }
                 foreach (Vector2 adj in getNeighbours4(randTile)) {
-                    if (isWater(getTile(adj))) {
-                        adjacentWater.Add(adj);
+					if (isWater(getTile(adj))) {
+						// exclude the outer border
+						if (adj.x > 0 && adj.y > 0 && adj.x < w - 1 && adj.y < h - 1) {
+	                        adjacentWater.Add(adj);
+						}
                     }
-                }
-            }   
+				}
+			}
+			// Mark an area around each island as reserved so that islands don't touch each other
+			foreach (Vector2 adj in adjacentWater) {
+				setTile(adj, Tile.TEMP);
+				tempTiles.Add(adj);
+				foreach (Vector2 adj2 in getNeighbours8(adj)) {
+					if (isWater(getTile(adj2))) {
+						setTile(adj2, Tile.TEMP);
+						tempTiles.Add(adj2);
+					}
+				}
+			}
             ++i;
         }
 
+		foreach (Vector2 t in tempTiles) {
+			setTile (t, Tile.WATER);
+		}
+
+		// find coastal tiles (and only ocean reachable tiles at that)
+		HashSet<Vector2> seen = new HashSet<Vector2>();
+		Queue<Vector2> todo = new Queue<Vector2>();
+		RandomSet<Vector2> coastal = new RandomSet<Vector2>(rnd);
+		// since I excluded the outer border, it is definitely water
+		todo.Enqueue(new Vector2(0,0));
+		seen.Add(todo.Peek());
+		while (todo.Count > 0) {
+			Vector2 randTile = todo.Dequeue();
+			foreach (Vector2 adj in getNeighbours4(randTile)) {
+				if (seen.Contains(adj)) {
+					continue;
+				} else if (isWater(getTile(adj))) {
+					todo.Enqueue(adj);
+				} else {
+					coastal.Add(adj);
+				}
+				seen.Add(adj);
+			}
+		}
+
 		// players and bases
 		foreach (Player p in players) {
-			if (p.isNeutral) continue;
-			Vector2 pos = new Vector2(Random.Range(3, w-3), Random.Range(3, h-3));
+			if (p.isNeutral || coastal.Count == 0) continue;
+			Vector2 pos = coastal.popRandom(); // new Vector2(Random.Range(3, w-3), Random.Range(3, h-3));
 			setTile(pos, Tile.BUILDING);
 			Building building = Instantiate(baseObject).GetComponent<Building>();
 			building.init(pos, BuildingType.BASE);
@@ -102,12 +168,12 @@ public class Map : MonoBehaviour {
 		}
 
 		// colonies
-		for (i = 0; i<20; i++) {
-			Vector2 pos = new Vector2(Random.Range(0, w), Random.Range(0, h));
-            if (!isBuildable(getTile(pos))) {
-                i--;
-                continue;
-            }
+		for (i = 0; i<numcolonies && coastal.Count > 0; i++) {
+			Vector2 pos = coastal.popRandom();// = new Vector2(Random.Range(0, w), Random.Range(0, h));
+            //if (!isBuildable(getTile(pos))) {
+            //    i--;
+            //    continue;
+            //}
 			setTile(pos, Tile.BUILDING);
 			Building building = Instantiate(buildingObject).GetComponent<Building>();
 			building.init(pos, BuildingType.COLONY);
@@ -124,8 +190,10 @@ public class Map : MonoBehaviour {
         case Tile.WATER:
             return new Vector2(1,0);
         case Tile.BUILDING:
-            return new Vector2(0,0);
-        case Tile.GRASS:
+			return new Vector2(0,0);
+		case Tile.TEMP:
+			return new Vector2(2,0);
+		case Tile.GRASS:
             return new Vector2(0,0);
         case Tile.SHORE:
         default:

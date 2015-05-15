@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public enum UnitType {MERCHANT=0, GALLEY=1, LONGBOAT=2};
 
 public class Unit : Steering {
+	//TODO: call getComponent less often
 	private int ATTACK = 0;
 
 	public Sprite[] sprites;
@@ -46,7 +47,14 @@ public class Unit : Steering {
 		transform.FindChild("Gold").GetComponent<Renderer>().enabled = false;
 		switch (type) {
 		case UnitType.MERCHANT:
-			capacity = 50f;
+			capacity = 25f;
+			ACCEL = 40f;
+			//MAX_V = 2f;
+			//ACCEL = 10f;
+			break;
+		default:
+			MAX_V = 5f;
+			ACCEL = 20f;
 			break;
 		}
 		GetComponent<LineRenderer>().enabled = false;
@@ -72,8 +80,6 @@ public class Unit : Steering {
 			renderer.sprite = spr;
 		}
 
-		MAX_V = 5f;
-		ACCEL = 20f;
 		health = maxHealth;
 	}
 	

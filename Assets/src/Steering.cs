@@ -7,8 +7,8 @@ public class Steering : MonoBehaviour
 	public bool canTurn = true;
 
 	protected float MAX_V = 5f;
-	protected float TURN_RATE = 900f;
 	protected float ACCEL = 20f;
+	protected float TURN_RATE = 900f;
 	protected float forceRemaining;
 
 	private static float dt;

@@ -56,6 +56,11 @@ public class Building : MonoBehaviour {
 	}
 
 	public void trainUnit() {
-		Scene.get().spawnUnit(this, UnitType.MERCHANT);
+		//if (owner.spend(Resource.FOOD, 100)) {
+		//	Scene.get().spawnUnit(this, UnitType.GALLEY);
+		//}
+		if (owner.spend(Resource.FOOD, 50)) {
+			Scene.get().spawnUnit(this, UnitType.MERCHANT);
+		}
 	}
 }

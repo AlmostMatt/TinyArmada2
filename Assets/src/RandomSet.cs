@@ -10,6 +10,7 @@ using System.Collections.Generic;
 public class RandomSet<T> : ICollection<T>, IEnumerable<T>, IEnumerable 
     //ISerializable, IDeserializationCallback
 {
+	//TODO: list remove is expensive, have an implicit ignore beyond index n
     private List<T> data = new List<T>();
     private Dictionary<T, int> indexOf = new Dictionary<T, int>();
     private Random rnd;
@@ -55,7 +56,7 @@ public class RandomSet<T> : ICollection<T>, IEnumerable<T>, IEnumerable
     
     public bool Remove(T obj) {
         if (indexOf.ContainsKey(obj)) {
-            data.RemoveAt(indexOf[obj]);
+            RemoveAt(indexOf[obj]);
             return true;
         } else {
             return false;
@@ -70,6 +71,7 @@ public class RandomSet<T> : ICollection<T>, IEnumerable<T>, IEnumerable
             indexOf[data[index]] = index;
         }
         indexOf.Remove(result);
+		data.RemoveAt(data.Count - 1); // TODO: this is too slow.
         return result;
     }
     
