@@ -62,11 +62,9 @@ public class Pathing
     // Pool and reuse priority open queue and closed set.
     // also the node objects
     private static Map map;
-    private static List<List<Tile>> tiles;
 
     public static void updateMap(Map newmap) {
         map = newmap;
-        tiles = map.getTileMap();
         // generate something like a navmesh if desired
     }
 
@@ -80,7 +78,7 @@ public class Pathing
         int y;
         if (x1 == x2) {
             for (y = Mathf.Min (y1, y2); y<=Mathf.Max (y1,y2);++y) {
-                if (!map.isWalkable(tiles[x1][y])) {
+                if (!map.isWalkable(map.getTile(x1,y))) {
                     return false;
                 }
             }
@@ -91,12 +89,12 @@ public class Pathing
         float deltaoffset = Mathf.Abs (dy / dx);
         y = y1;
         for (int x = x1; x <= x2; ++x) {
-            if (!map.isWalkable(tiles[x][y])) {
+			if (!map.isWalkable(map.getTile(x,y))) {
                 return false;
             }
             yoffset += deltaoffset;
 			while (yoffset >= 0.5f) {
-                if (!map.isWalkable(tiles[x][y])) {
+				if (!map.isWalkable(map.getTile(x,y))) {
                     return false;
                 }
                 y += (int) Mathf.Sign(y2 - y1);
@@ -120,15 +118,16 @@ public class Pathing
 
     // grid coordinates
     private static int manhattan(Vector2 t1, Vector2 t2) {
-        // TODO: change this to count diagonals (abs(dx-dy) + diag * min(dx,dy)) but with more abs
-        return 10 * (int) (Mathf.Abs(t2.x - t1.x) + Mathf.Abs(t2.y - t1.y));
+		// this is slightly better than manhattan for diagonal costs
+		int dx = (int) Mathf.Abs(t2.x - t1.x);
+		int dy = (int) Mathf.Abs(t2.y - t1.y);
+		return 10 * Mathf.Abs(dx - dy) + 14 * Mathf.Min(dx, dy);
     }
 
     // takes game coordinates
     public static Path findPath(Vector2 p1, Vector2 p2, float destRadius) {
         Vector2 t1 = map.gameToMap(p1);
         Vector2 t2 = map.gameToMap(p2);
-        //map.isWalkable(tiles[0][0]);
         Path path = new Path();
         path.start = p1;
         path.goal = p2;
@@ -143,8 +142,8 @@ public class Pathing
 			// compute path, (heirarchical?)
 			List<Vector2> tiles = astar(t1, t2);
 			// smooth path
-
-			// cache parts of path
+			tiles = smoothed(t1, tiles);
+			// cache parts of path (each tile's shortest path to each later tile on the same path is optimal)
 			// convert back to game coordinates
 			Vector2 prevPoint = path.start;
 			path.length = 0f;
@@ -153,17 +152,43 @@ public class Pathing
 				path.length += (pt - prevPoint).magnitude;
 				path.points.Add(pt);
 			}
+			// TODO: singleton path (from t1 to t1) inside of walls seems to throw an index error here (astar returns empty path)
 			path.points[path.points.Count - 1] = path.goal;
 		}
         return path;
     }
+
+	private static List<Vector2> smoothed(Vector2 start, List<Vector2> path) {
+		// TODO: this is not the optimal path.
+		// consider: ideal path move 5 straight then turn, but the raycast says I can move 10 straight so it does that instead
+
+		// binary search to see how far you can raycast
+		Vector2 current = start;
+		List<Vector2> smoothPath = new List<Vector2>();
+		int i1 = 0; // first candidate for smoothed path
+		while (i1 < path.Count) {
+			int i2 = path.Count - 1;
+			while (i1 < i2) {
+				int i = (i1 + i2 + 1)/2;
+				bool canSkip = raycast(current, path[i]);
+				if (canSkip) {
+					i1 = i;
+				} else {
+					i2 = i - 1;
+				}
+			}
+			smoothPath.Add (path[i1]);
+			i1++;
+		}
+		return smoothPath;
+	}
 
 	// tile based path
 	private static List<Vector2> astar(Vector2 t1, Vector2 t2) {
         // TODO: reverse this to start at t2 and go toward t1 so that inland points fail faster
         // TODO: find nearest water tile to t2 if t2 is inland
 
-		int MAX_OPEN = 200;
+		int MAX_OPEN = 100;
         HeapPriorityQueue<PathNode> open = new HeapPriorityQueue<PathNode>(MAX_OPEN);
         Dictionary<Vector2, PathNode> nodes = new Dictionary<Vector2, PathNode>();
         HashSet<Vector2> closed = new HashSet<Vector2>();
@@ -178,12 +203,12 @@ public class Pathing
             if (node.tile == t2) {
                 break;
             }
-            foreach (Vector2 ntile in map.getNeighbours4(node.tile)) {   
+            foreach (Vector2 ntile in map.getNeighbours8(node.tile)) {   
                 if (!map.isWalkable(map.getTile(ntile)) || closed.Contains(ntile)) {
                     continue;
                 }
                 PathNode othernode = getNode(nodes, ntile, t2);
-                int newg = node.g + 10;
+                int newg = (ntile.x == node.tile.x || ntile.y == node.tile.y) ? node.g + 10 : node.g + 14;
                 if (othernode.seenBefore) {
                     if (newg < othernode.g) {
                         othernode.g = newg;
@@ -199,7 +224,7 @@ public class Pathing
         }
 
         List<Vector2> points = new List<Vector2>();
-        if (!closed.Contains(t2)) {
+        if (!closed.Contains(t2) || nodes[t2].parent == null) { // fix for path to current tile when current tile is a wall
             // no path found
             points.Add(t1);
         } else {

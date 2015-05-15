@@ -64,7 +64,7 @@ public class Map : MonoBehaviour {
         while (i < numislands) {
             int x = Random.Range(1,w-1);
             int y = Random.Range(1,h-1);
-            if (isGround(map[x][y])) { continue; }
+            if (isGround(getTile (x,y))) { continue; }
 
             // a set of water values that could be made into land
             RandomSet<Vector2> adjacentWater = new RandomSet<Vector2>(rnd);
@@ -138,7 +138,7 @@ public class Map : MonoBehaviour {
         for (int x=0; x<w; ++x) {
             for (int y=0; y<h; ++y) {
                 Vector3 pos = mapToGame(x,y);
-                genSquare(pos.x, pos.y, textureCoord(map[x][y]));
+                genSquare(pos.x, pos.y, textureCoord(getTile (x,y)));
             }
         }
 
@@ -197,16 +197,21 @@ public class Map : MonoBehaviour {
 
 	public List<Building> getBuildings() {
 		return buildings;
-    }
-
-    public List<List<Tile>> getTileMap() {
-        return map;
-    }
-
-    // assumes map coordinates, not game
-    public Tile getTile(Vector2 coord) {
-        return map[(int) coord.x][(int) coord.y];
-    }
+	}
+	
+	// assumes map coordinates, not game
+	public Tile getTile(Vector2 coord) {
+		return getTile((int) coord.x, (int) coord.y);
+	}
+	
+	// assumes map coordinates, not game
+	public Tile getTile(int x, int y) {
+		if (x >= 0 && x < map.Count && y >= 0 && y < map[x].Count) {
+			return map[x][y];
+		} else {
+			return Tile.GRASS; // ideally this doesn't come up much. neighbours don't handle it either.
+		}
+	}
     
     private void setTile(Vector2 coord, Tile value) {
         map[(int) coord.x][(int) coord.y] = value;

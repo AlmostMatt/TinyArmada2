@@ -49,6 +49,7 @@ public class Unit : Steering {
 			capacity = 50f;
 			break;
 		}
+		GetComponent<LineRenderer>().enabled = false;
 	}
 
 	/*
@@ -165,6 +166,18 @@ public class Unit : Steering {
 		Renderer r2 = HPbar2.GetComponent<Renderer>();
 		r2.material.color = Color.red;
 		r2.material.SetFloat("_Cutoff", 1f - hpPercent/2f);
+		
+		LineRenderer linerender = GetComponent<LineRenderer>();
+		if (hasDest) {
+			linerender.enabled = true;
+			linerender.SetVertexCount(path.points.Count + 1);
+			linerender.SetPosition(0, transform.position);
+			for (int i=0; i<path.points.Count; ++i) {
+				linerender.SetPosition(i + 1, path.points[i]);
+			}
+		} else {
+			linerender.enabled = false;
+		}
 	}
 
 	/*
