@@ -2,8 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public enum UnitType {MERCHANT=0, GALLEY=1, LONGBOAT=2};
-
 public class Unit : Steering {
 	//TODO: call getComponent less often
 	private int ATTACK = 0;
@@ -40,6 +38,8 @@ public class Unit : Steering {
 	public Resource resource;
 	public float capacity = 1f;
 	public Building tradeDest;
+
+	private SpriteRenderer teamColor;
 	
 	public void init(Player p, UnitType unitType) {
 		setOwner(p);
@@ -56,6 +56,12 @@ public class Unit : Steering {
 			MAX_V = 5f;
 			ACCEL = 20f;
 			break;
+		}
+		GetComponent<SpriteRenderer>().sprite = UnitData.getImage(type);
+		teamColor = transform.FindChild("team-color").GetComponent<SpriteRenderer>();
+		teamColor.sprite = UnitData.getTeamImage(type);
+		if (owner != null) {
+			teamColor.color = owner.color;
 		}
 		GetComponent<LineRenderer>().enabled = false;
 	}
@@ -263,9 +269,8 @@ public class Unit : Steering {
 	public void setOwner(Player p) {
 		owner = p;
 		p.units.Add(this);
-		Transform teamColor = transform.FindChild("team-color");
 		if (teamColor != null) {
-			teamColor.GetComponent<SpriteRenderer>().color = owner.color;
+			teamColor.color = owner.color;
 		}
 	}
 }

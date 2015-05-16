@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public enum BuildingType {BASE=0, COLONY=1};
 
@@ -23,6 +24,8 @@ public class Building : MonoBehaviour {
 	public Vector3 gamePos;
 	public BuildingType type;
 
+	private List<UnitType> trains = new List<UnitType>();
+
 	// Use this for initialization
 	void Start () {
 	
@@ -44,6 +47,10 @@ public class Building : MonoBehaviour {
 		tilePos = tileCoordinate;
 		gamePos = Scene.get().map.mapToGame(tileCoordinate);
 		transform.position = gamePos;
+
+		trains.Add(UnitType.MERCHANT);
+		trains.Add(UnitType.GALLEY);
+		trains.Add(UnitType.LONGBOAT);
 	}
 	
 	public void setOwner(Player p) {
@@ -55,12 +62,18 @@ public class Building : MonoBehaviour {
 		}
 	}
 
-	public void trainUnit() {
-		//if (owner.spend(Resource.FOOD, 100)) {
-		//	Scene.get().spawnUnit(this, UnitType.GALLEY);
-		//}
-		if (owner.spend(Resource.FOOD, 50)) {
-			Scene.get().spawnUnit(this, UnitType.MERCHANT);
+	public List<UnitType> getTrains() {
+		return trains;
+	}
+
+	// fits the "RadialMenu callback"
+	public void trainUnit(int selected) {
+		if (selected != -1) {
+			UnitType unitType = trains[selected];
+			var cost = UnitData.getCost(unitType);
+			if (owner.spend(cost)) {
+				Scene.get().spawnUnit(this, unitType);
+			}
 		}
 	}
 }

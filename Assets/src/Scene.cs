@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 public class Scene : MonoBehaviour {
 	public GameObject unitObject;
-	public GameObject tntObject;
 	public Texture2D selectImg;
 
 	public List<Unit> units;
@@ -21,6 +20,7 @@ public class Scene : MonoBehaviour {
 	private static Scene singleton;
 
 	public UnityEngine.UI.Text[] resources;
+	public RadialMenu radial;
 
 	// Use this for initialization
 	void Start () {
@@ -98,6 +98,7 @@ public class Scene : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
+		// TODO: cleanup selection code
 		if (Input.GetMouseButtonDown(0)) {
 			clickPos = getWorldMousePos();
 			float minD = float.MaxValue;
@@ -109,7 +110,25 @@ public class Scene : MonoBehaviour {
 					selected = grp;
 				}
 			}
-			if (selected == null) {
+			
+			foreach(Building building in buildings) {
+				float dist = Vector2.Distance(clickPos, building.gamePos);
+				if (dist < 0.75f) {
+					if (building.type == BuildingType.BASE) {
+						List<Sprite> icons = new List<Sprite>();
+						foreach (UnitType uType in building.getTrains()) {
+							icons.Add(UnitData.getIcon(uType));
+						}
+						radial.mouseDown(Camera.main.WorldToScreenPoint(building.transform.position),
+						                 icons, building.trainUnit);
+					} else {
+						players[1].toggleTrading(building);
+					}
+					break;
+				}
+			}
+
+			if (selected == null && radial.visible == false) {
 				selecting = true;
 			}
 		}
@@ -154,17 +173,6 @@ public class Scene : MonoBehaviour {
 					if (dist < minD) {
 						closest = unit;
 						minD = dist;
-					}
-				}
-				foreach(Building building in buildings) {
-					float dist = Vector2.Distance(p, building.gamePos);
-					if (dist < 0.75f) {
-						if (building.type == BuildingType.BASE) {
-							building.trainUnit();
-						} else {
-							players[1].toggleTrading(building);
-						}
-						break;
 					}
 				}
 				if (closest != null) {

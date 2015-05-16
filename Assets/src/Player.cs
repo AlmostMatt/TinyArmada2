@@ -53,7 +53,8 @@ public class Player
 		foreach (Resource res in Enum.GetValues(typeof(Resource))) {
 			resources[res] = 0f;
 		}
-		resources[Resource.FOOD] = 100f;
+		collect (Resource.FOOD, 100f);
+		collect (Resource.GOLD, 50f);
 	}
 	
 	public void collect(Resource res, float amount) {
@@ -67,10 +68,30 @@ public class Player
 		}
 	}
 	
+	public bool has(Dictionary<Resource, int> costDict) {
+		foreach (KeyValuePair<Resource, int> kvp in costDict) {
+			if (kvp.Value > resources[kvp.Key]) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	public bool has(Resource res, float amount) {
 		return resources[res] >= amount;
 	}
-	
+
+	public bool spend(Dictionary<Resource, int> costDict) {
+		if (has(costDict)) {
+			foreach (KeyValuePair<Resource, int> kvp in costDict) {
+				spend (kvp.Key, kvp.Value);
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	public bool spend(Resource res, float amount) {
 		if (has(res, amount)) {
 			resources[res] -= amount;
@@ -98,5 +119,7 @@ public class Player
 		resourceText = new Dictionary<Resource, UnityEngine.UI.Text>();
 		resourceText[Resource.FOOD] = resText[0];
 		resourceText[Resource.GOLD] = resText[1];
+		amountChanged(Resource.FOOD);
+		amountChanged(Resource.GOLD);
 	}
 }
