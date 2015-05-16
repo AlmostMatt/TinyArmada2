@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class Unit : Steering {
 	//TODO: call getComponent less often
 	private int ATTACK = 0;
+	private float range = 1f;
 
 	public Sprite[] sprites;
 	public float radius = 0.25f;
@@ -49,12 +50,13 @@ public class Unit : Steering {
 		case UnitType.MERCHANT:
 			capacity = 25f;
 			ACCEL = 40f;
-			//MAX_V = 2f;
-			//ACCEL = 10f;
+			MAX_V = 3f;
+			ACCEL = 10f;
 			break;
 		default:
 			MAX_V = 5f;
 			ACCEL = 20f;
+			range = 4f;
 			break;
 		}
 		GetComponent<SpriteRenderer>().sprite = UnitData.getImage(type);
@@ -74,7 +76,7 @@ public class Unit : Steering {
 		neighbours = new Neighbours<Unit>();
 		statusMap = new StatusMap(this);
 		actionMap = new ActionMap(this);
-		actionMap.add(0, new Ability(1f));
+		actionMap.add(0, new Ability(0.1f));
 	}
 
 	// Use this for initialization
@@ -118,7 +120,7 @@ public class Unit : Steering {
 		statusMap.update(Time.fixedDeltaTime);
 		actionMap.update(Time.fixedDeltaTime);
 		if (canAttack()) {
-			float maxdd = 8f * 8f;
+			float maxdd = range * range;
 			foreach (Tuple<float, Unit> tuple in neighbours) {
 				if (tuple.First > maxdd ) {
 					break;

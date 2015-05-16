@@ -11,6 +11,7 @@ public class Scene : MonoBehaviour {
 	public List<Player> players = new List<Player>();
 	public List<Building> buildings;
 
+	private Vector2 rClickPos;
 	private Vector2 clickPos;
 	private List<Unit> hover;
 	private bool selecting = false;
@@ -98,6 +99,39 @@ public class Scene : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
+		handleInput();
+			
+		// update group positions for hud/interactions
+		groups.RemoveWhere(grp => grp.isEmpty());
+		foreach (UnitGroup grp in groups) {
+			grp.update();
+		}
+
+		// update neighbours
+		foreach (Unit u1 in units) {
+			u1.neighbours.Clear();
+			// compare to previous units, not later units)
+			foreach (Unit u2 in units) {
+				if (u2 == u1) {
+					break;
+				}
+				float dist = (u1.transform.position - u2.transform.position).sqrMagnitude;
+				u1.neighbours.Add(u2, dist);
+				u2.neighbours.Add(u1, dist);
+			}
+		}
+	}
+
+	private void handleInput() {
+		if (Input.GetMouseButtonDown(1)) {
+			rClickPos = getWorldMousePos();
+			radial.cancel();
+		} else if (Input.GetMouseButton(1)) {
+			Vector2 offset = rClickPos - getWorldMousePos();
+			Camera.main.transform.Translate(offset);
+			// in theory after the translate the old pos is accurate again
+		}
+
 		// TODO: cleanup selection code
 		if (Input.GetMouseButtonDown(0)) {
 			clickPos = getWorldMousePos();
@@ -127,12 +161,12 @@ public class Scene : MonoBehaviour {
 					break;
 				}
 			}
-
+			
 			if (selected == null && radial.visible == false) {
 				selecting = true;
 			}
 		}
-
+		
 		if (selected != null) {
 			if (Input.GetMouseButton(0)) {
 				foreach (Unit unit in selected) {
@@ -143,7 +177,7 @@ public class Scene : MonoBehaviour {
 				selected = null;
 			}
 		}
-
+		
 		if (selecting && Input.GetMouseButton(0)) {
 			foreach( Unit unit in hover) {
 				unit.deselect();
@@ -181,7 +215,7 @@ public class Scene : MonoBehaviour {
 				}
 			}
 		}
-
+		
 		if (selecting && Input.GetMouseButtonUp(0)) {
 			if (hover.Count > 0) {
 				UnitGroup newGroup = new UnitGroup();
@@ -200,14 +234,14 @@ public class Scene : MonoBehaviour {
 			}
 			hover.Clear();
 		}
-
+		
 		if (Input.GetMouseButtonDown(1)) {
 			// whether or not you clicked on a group, check for single select
 			foreach (Unit unit in hover) {
 				unit.moveTo(getWorldMousePos(), 0.3f * Mathf.Sqrt(hover.Count));
 			}
 		}
-
+		
 		if (Input.GetKeyDown(KeyCode.Q)) {
 			Unit newUnit = Instantiate(unitObject).GetComponent<Unit>();
 			newUnit.transform.position = getWorldMousePos();
@@ -225,25 +259,6 @@ public class Scene : MonoBehaviour {
 				hover.Remove(u);
 				units.RemoveAt(i);
 				Destroy(u.gameObject);
-			}
-		}
-		// update group positions for hud/interactions
-		groups.RemoveWhere(grp => grp.isEmpty());
-		foreach (UnitGroup grp in groups) {
-			grp.update();
-		}
-
-		// update neighbours
-		foreach (Unit u1 in units) {
-			u1.neighbours.Clear();
-			// compare to previous units, not later units)
-			foreach (Unit u2 in units) {
-				if (u2 == u1) {
-					break;
-				}
-				float dist = (u1.transform.position - u2.transform.position).sqrMagnitude;
-				u1.neighbours.Add(u2, dist);
-				u2.neighbours.Add(u1, dist);
 			}
 		}
 	}

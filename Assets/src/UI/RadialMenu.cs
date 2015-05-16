@@ -66,6 +66,9 @@ public class RadialMenu : MonoBehaviour {
 
 	void OnGUI() {
 		Event e = Event.current;
+		if (!visible) {
+			return;
+		}
 
 		if (e.type == EventType.MouseUp) {
 			//callback
@@ -73,6 +76,7 @@ public class RadialMenu : MonoBehaviour {
 			visible = false;
 			if (callback != null) {
 				callback(selected);
+				callback = null;
 			}
 		}
 
@@ -95,6 +99,12 @@ public class RadialMenu : MonoBehaviour {
 			selectedButtons[i].alpha = a1;
 			normalButtons[i].alpha = a2;
 		}
+	}
+
+	public void cancel() {
+		group.alpha = 0f;
+		visible = false;
+		callback = null;
 	}
 
 	public void mouseDown(Vector2 pos, List<Sprite> newIcons, Callback f) {
