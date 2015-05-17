@@ -90,11 +90,15 @@ public class Scene : MonoBehaviour {
 	public void spawnUnit(Building building, UnitType unitType) {
         // units should be in front of buildings
 		Unit newUnit = Instantiate(unitObject).GetComponent<Unit>();
-		newUnit.transform.position = building.gamePos + new Vector3(Random.Range(-1f, 1f),
-		                                                Random.Range(-1f, 1f), -1);
+		Vector2 pos = building.getDock();
+		newUnit.transform.position = new Vector3(pos.x, pos.y, -1);
 		newUnit.init(building.owner, unitType);
 		units.Add(newUnit);
-		//newUnit.setGroup(newGroup);
+		if (unitType != UnitType.MERCHANT) {
+			UnitGroup newGroup = new UnitGroup();
+			newUnit.setGroup(newGroup);
+			groups.Add(newGroup);
+		}
 	}
 
 	// Update is called once per frame

@@ -41,6 +41,7 @@ public class Unit : Steering {
 	public Building tradeDest;
 
 	private SpriteRenderer teamColor;
+	private ParticleSystem fireEmitter;
 	
 	public void init(Player p, UnitType unitType) {
 		setOwner(p);
@@ -66,6 +67,8 @@ public class Unit : Steering {
 			teamColor.color = owner.color;
 		}
 		GetComponent<LineRenderer>().enabled = false;
+		fireEmitter = transform.FindChild("Fire").GetComponent<ParticleSystem>();
+		fireEmitter.enableEmission = false;
 	}
 
 	/*
@@ -150,16 +153,27 @@ public class Unit : Steering {
 				}
 			} else if (tradeDest == null  && !hasDest) {
 				// pick a building
-				List<Building> buildings = Scene.get().buildings;
-				Building building = buildings[Random.Range(0, buildings.Count)];
-				tradeDest = building;
-				moveTo (building.gamePos, radius);
+				// TODO: alternatively, pick building in tradeWith that has max current amount - capacity * number of others
+				// TODO: factor other units and expected profit into account
+				Dictionary<Vector2, Building> destBuildingMap = new Dictionary<Vector2, Building>();
+				HashSet<Vector2> dests = new HashSet<Vector2>();
+				foreach (Building building in Scene.get().buildings) {
+					if (building.type == BuildingType.COLONY) {
+						// TODO: handle the case of 2 buildings on the same tile
+						// 			(pathing will pick one arbitratily)
+						destBuildingMap[building.getDock()] = building;
+						dests.Add(building.getDock());
+					}
+				}
+				Path newPath = Pathing.findShortestPath(transform.position, dests, radius);
+				tradeDest = destBuildingMap[newPath.goal];
+				followPath(newPath);
 			} else if (tradeDest != null) {
 				// heading somewhere
                 if (hasDest && path.arrived) {
 					resource = tradeDest.resource;
 					carrying = tradeDest.collect(capacity);
-					moveTo(owner.buildings[0].gamePos, radius);
+					moveTo(owner.buildings[0].getDock(), radius);
 					tradeDest = null;
 					transform.FindChild("Gold").GetComponent<Renderer>().enabled = true;
 				}
@@ -197,13 +211,15 @@ public class Unit : Steering {
 	/*
 	 * Unit actions
 	 */
+	
+	public void followPath(Path newPath) {
+		path = newPath;
+		hasDest = true;
+	}
 
 	public void moveTo(Vector2 point, float radius) {
-		hasDest = true;
-        path = Pathing.findPath(transform.position, point, radius);
-		//dest = point;
-		//destRadius = radius;
-		//atDest = false;
+		Path newPath = Pathing.findPath(transform.position, point, radius);
+		followPath(newPath);
 	}
 
 	public void setGroup(UnitGroup newGroup) {

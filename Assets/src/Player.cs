@@ -64,7 +64,7 @@ public class Player
 
 	private void amountChanged(Resource res) {
 		if (resourceText != null && resourceText.ContainsKey(res)) {
-			resourceText[res].text = resources[res].ToString();
+			resourceText[res].text = ((int) resources[res]).ToString();
 		}
 	}
 	

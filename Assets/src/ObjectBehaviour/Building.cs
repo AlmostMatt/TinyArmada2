@@ -9,10 +9,10 @@ public class Building : MonoBehaviour {
 	public bool dead = false;
 	public Player owner;
 
-	public float amount = 100f;
+	private float amount = 0f;
 	public float maxAmount = 100f;
 	public Resource resource = Resource.FOOD;
-	private float productionRate = 10f;
+	private float productionRate = 1f;
 
 	public float radius = 0.25f;
 	
@@ -23,12 +23,13 @@ public class Building : MonoBehaviour {
 	public Vector2 tilePos;
 	public Vector3 gamePos;
 	public BuildingType type;
+	private Transform dock;
 
 	private List<UnitType> trains = new List<UnitType>();
 
 	// Use this for initialization
 	void Start () {
-	
+		amount = 0f;
 	}
 	
 	// Update is called once per frame
@@ -45,8 +46,20 @@ public class Building : MonoBehaviour {
 	public void init(Vector2 tileCoordinate, BuildingType buildingType) {
 		type = buildingType;
 		tilePos = tileCoordinate;
-		gamePos = Scene.get().map.mapToGame(tileCoordinate);
+		Map map = Scene.get().map;
+		gamePos = map.mapToGame(tileCoordinate);
 		transform.position = gamePos;
+
+		RandomSet<Vector2> rs = new RandomSet<Vector2>();
+		foreach (Vector2 nbor in map.getNeighbours4(tileCoordinate)) {
+			if (map.isWalkable(map.getTile(nbor))) {
+				rs.Add(nbor);
+			}
+		}
+		Vector2 dockSide = rs.popRandom() - tileCoordinate;
+		float angle = Mathf.Rad2Deg * Mathf.Atan2(dockSide.y, dockSide.x);
+		transform.FindChild("dockRotation").localEulerAngles = new Vector3(0f,0f,angle);
+		dock = transform.FindChild("dockRotation/dock");
 
 		trains.Add(UnitType.MERCHANT);
 		trains.Add(UnitType.GALLEY);
@@ -75,5 +88,9 @@ public class Building : MonoBehaviour {
 				Scene.get().spawnUnit(this, unitType);
 			}
 		}
+	}
+
+	public Vector2 getDock() {
+		return dock.position;
 	}
 }

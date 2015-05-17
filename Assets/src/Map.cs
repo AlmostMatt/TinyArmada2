@@ -300,7 +300,7 @@ public class Map : MonoBehaviour {
 
     public bool isWalkable(Tile tile) {
         // consider buildings water for now since they are where boats spawn
-        return isWater(tile) || tile == Tile.BUILDING;
+        return isWater(tile);
     }
     
     public HashSet<Vector2> getNeighbours4(int x, int y) {
