@@ -52,13 +52,13 @@ public class Unit : Steering, Attackable {
 		case UnitType.MERCHANT:
 			capacity = 25f;
 			ACCEL = 40f;
-			MAX_V = 3f;
-			ACCEL = 10f;
+			MAX_V = 2f;
+			ACCEL = 5;
 			break;
 		default:
-			MAX_V = 5f;
-			ACCEL = 20f;
-			range = 4f;
+			MAX_V = 1.5f;
+			ACCEL = 5;
+			range = 3f;
 			break;
 		}
 		GetComponent<SpriteRenderer>().sprite = UnitData.getImage(type);
@@ -179,9 +179,9 @@ public class Unit : Steering, Attackable {
 					float maxProfit = -1f;
 					foreach (Building building in owner.tradeWith) {
 						Path tradeRoute = owner.getTradeRoute(building);
-						float expectedProfit = Mathf.Max(building.expectedProfit(tradeRoute.length)
+						float expectedProfit = Mathf.Max(building.expectedProfit(tradeRoute.length / MAX_V)
 														 - capacity * owner.getTraders(building).Count, 0f);
-						expectedProfit = expectedProfit / (2 * tradeRoute.length);
+						expectedProfit = MAX_V * expectedProfit / (2 * tradeRoute.length);
 						if (expectedProfit > maxProfit) {
 							maxProfit = expectedProfit;
 							setTradeDest(building);
@@ -199,9 +199,9 @@ public class Unit : Steering, Attackable {
 				float maxProfit = -1f;
 				foreach (Building building in owner.tradeWith) {
 					Path tradeRoute = Pathing.findPath(transform.position, building.getDock(), radius);
-					float expectedProfit = Mathf.Max(building.expectedProfit(tradeRoute.length)
-					                                 - capacity * owner.getTraders(building).Count, 0f);
-					float tripDuration = tradeRoute.length + owner.getReturnRoute(building).length;
+					float expectedProfit = Mathf.Max(building.expectedProfit(tradeRoute.length / MAX_V)
+					                                 - capacity * owner.getTraders(building).Count, 0f);	
+					float tripDuration = tradeRoute.length / MAX_V + owner.getReturnRoute(building).length / MAX_V;
 					expectedProfit = expectedProfit / tripDuration;
 					if (expectedProfit > maxProfit) {
 						maxProfit = expectedProfit;

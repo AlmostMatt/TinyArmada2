@@ -30,10 +30,11 @@ public class UnitData : MonoBehaviour {
 			break;
 		case UnitType.GALLEY:
 			cost[Resource.FOOD] = 100;
-			cost[Resource.GOLD] = 25;
+			cost[Resource.GOLD] = 10;
 			break;
 		default:
-			cost[Resource.FOOD] = 9999;
+			cost[Resource.FOOD] = 100;
+			cost[Resource.GOLD] = 10;
 			break;
 		}
 		return cost;

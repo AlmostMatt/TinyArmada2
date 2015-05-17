@@ -121,6 +121,7 @@ public class Player
 			tradeWith.Add(building);
 			getTradeRoute(building); // force tradeRoute to be calculated
 		}
+		building.toggleTradeWith(this); // updates the visual
 	}
 
 	public HashSet<Building> tradeBuildings() {

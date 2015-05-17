@@ -15,6 +15,7 @@ public class Building : MonoBehaviour, Attackable {
 	private float productionRate = 1f;
 
 	public float radius {get; set;}
+	public float influenceRadius;
 	
 	private int maxHealth = 10;
 	private int health;
@@ -26,6 +27,9 @@ public class Building : MonoBehaviour, Attackable {
 	private Transform dock;
 
 	private List<UnitType> trains = new List<UnitType>();
+
+	private SpriteRenderer tradeWith;
+	private SpriteRenderer influence;
 
 	// Use this for initialization
 	void Start () {
@@ -79,6 +83,24 @@ public class Building : MonoBehaviour, Attackable {
 		health = maxHealth;
 		radius = 0.25f;
 		dead = false;
+	
+		Transform influenceObj = transform.FindChild("influence");
+		influence = influenceObj.GetComponent<SpriteRenderer>();
+		tradeWith = transform.FindChild("tradeWith").GetComponent<SpriteRenderer>();
+
+		switch(buildingType) {
+		case BuildingType.BASE:
+			influenceRadius = 3f;
+			break;
+		case BuildingType.COLONY:
+		default:
+			influenceRadius = 2.5f;
+			break;
+		}
+		// the buildign itself has a scale
+		float sz = (2f * influenceRadius / influence.sprite.bounds.size.x) * (1f/transform.localScale.x);
+		influenceObj.localScale = new Vector3(sz, sz, 1f);
+		tradeWith.enabled = false;
 	}
 	
 	public void setOwner(Player p) {
@@ -90,6 +112,15 @@ public class Building : MonoBehaviour, Attackable {
 		Transform teamColor = transform.FindChild("team-color");
 		if (teamColor != null) {
 			teamColor.GetComponent<SpriteRenderer>().color = owner.color;
+		}
+		float influenceAlpha = p.isNeutral ? 0.15f : 0.25f;
+		influence.color = new Color(p.color.r, p.color.g, p.color.b, influenceAlpha);
+	}
+
+	public void toggleTradeWith(Player p) {
+		if (p.isHuman) {
+			tradeWith.enabled = !tradeWith.enabled;
+			tradeWith.color = p.color;
 		}
 	}
 

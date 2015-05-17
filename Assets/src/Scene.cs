@@ -209,6 +209,9 @@ public class Scene : MonoBehaviour {
 			float rr = (mousePos - p).sqrMagnitude;
 			//Rect rect = getRect (mousePos, clickPos);
 			foreach( Unit unit in units) {
+				if (!unit.owner.isHuman || unit.type == UnitType.MERCHANT) {
+					continue;
+				}
 				//if (rect.Contains(unit.transform.position)) {
 				if ((((Vector2) unit.transform.position) - p).sqrMagnitude <= rr) {
 					unit.select();
