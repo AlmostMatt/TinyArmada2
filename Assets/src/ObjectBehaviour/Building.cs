@@ -4,17 +4,17 @@ using System.Collections.Generic;
 
 public enum BuildingType {BASE=0, COLONY=1};
 
-public class Building : MonoBehaviour {
+public class Building : MonoBehaviour, Attackable {
 	
-	public bool dead = false;
+	public bool dead {get; set;}
 	public Player owner;
 
 	private float amount = 0f;
-	public float maxAmount = 100f;
+	public float maxAmount = 50f;
 	public Resource resource = Resource.FOOD;
 	private float productionRate = 1f;
 
-	public float radius = 0.25f;
+	public float radius {get; set;}
 	
 	private int maxHealth = 10;
 	private int health;
@@ -29,12 +29,15 @@ public class Building : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		amount = 0f;
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		amount = Mathf.Min(amount + productionRate * Time.deltaTime, maxAmount);
+		if (type != BuildingType.BASE) {
+			amount = Mathf.Min(amount + productionRate * Time.deltaTime, maxAmount);
+			float sz = 0.3f + 1.2f * amount / maxAmount;
+			transform.FindChild("resource").localScale = new Vector3(sz,sz,1f);
+		}
 	}
 
 	public float collect(float capacity) {
@@ -71,9 +74,17 @@ public class Building : MonoBehaviour {
 		trains.Add(UnitType.MERCHANT);
 		trains.Add(UnitType.GALLEY);
 		trains.Add(UnitType.LONGBOAT);
+
+		amount = 0f;
+		health = maxHealth;
+		radius = 0.25f;
+		dead = false;
 	}
 	
 	public void setOwner(Player p) {
+		if (owner != null) {
+			owner.buildings.Remove(this);
+		}
 		owner = p;
 		p.buildings.Add(this);
 		Transform teamColor = transform.FindChild("team-color");
@@ -99,5 +110,13 @@ public class Building : MonoBehaviour {
 
 	public Vector2 getDock() {
 		return dock.position;
+	}
+
+	public void damage(Player attacker, int amount) {
+		health -= amount;
+		if (health <= 0) {
+			health = maxHealth;
+			setOwner(attacker);
+		}
 	}
 }

@@ -236,12 +236,15 @@ public class Steering : MonoBehaviour
 				break;
 			}
 			Unit other = tuple.Second;
-			Vector2 v1 = rb.velocity;
-			Vector2 v2 = other.rb.velocity;
 			Vector2 offset = other.transform.position - transform.position;
+			float d = Mathf.Sqrt(tuple.First);
+			if (d == 0f) {
+				// Units spawn with identical position.
+				offset = new Vector2(0.01f, 0f);
+				d = 0.01f;
+			}
 			// only prioritize separation if the objects are moving toward each other
 			float importance = 0.5f;//(sameDir(v1, v2) || !sameDir(v1, offset)) ? 0.3f : 0.6f;
-			float d = Mathf.Sqrt(tuple.First);
 			// force of 0.5 per other
 			float force = importance * (TOO_CLOSE - d)/TOO_CLOSE;
 			totalforce += force;

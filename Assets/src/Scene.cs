@@ -126,6 +126,7 @@ public class Scene : MonoBehaviour {
 		// update neighbours
 		foreach (Unit u1 in units) {
 			u1.neighbours.Clear();
+			u1.nearbyBuildings.Clear();
 			// compare to previous units, not later units)
 			foreach (Unit u2 in units) {
 				if (u2 == u1) {
@@ -134,6 +135,10 @@ public class Scene : MonoBehaviour {
 				float dist = (u1.transform.position - u2.transform.position).sqrMagnitude;
 				u1.neighbours.Add(u2, dist);
 				u2.neighbours.Add(u1, dist);
+			}
+			foreach (Building b in buildings) {
+				float dist = (b.gamePos - u1.transform.position).sqrMagnitude;
+				u1.nearbyBuildings.Add(b, dist);
 			}
 		}
 	}

@@ -2,13 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Unit : Steering {
+public class Unit : Steering, Attackable {
 	//TODO: call getComponent less often
 	private int ATTACK = 0;
 	private float range = 1f;
 
 	public Sprite[] sprites;
-	public float radius = 0.25f;
+	public float radius {get; set;}
 	public GameObject bulletObj;
 
 	private bool selected = false;
@@ -29,8 +29,9 @@ public class Unit : Steering {
 	private StatusMap statusMap;
 	private ActionMap actionMap;
 	public Neighbours<Unit> neighbours;
+	public Neighbours<Building> nearbyBuildings;
 
-	public bool dead = false;
+	public bool dead {get; set;}
 	public Player owner;
 	public UnitType type;
 
@@ -46,7 +47,7 @@ public class Unit : Steering {
 	public void init(Player p, UnitType unitType) {
 		setOwner(p);
 		type = unitType;
-		transform.FindChild("Gold").GetComponent<Renderer>().enabled = false;
+		transform.FindChild("resource").GetComponent<Renderer>().enabled = false;
 		switch (type) {
 		case UnitType.MERCHANT:
 			capacity = 25f;
@@ -69,6 +70,9 @@ public class Unit : Steering {
 		GetComponent<LineRenderer>().enabled = false;
 		fireEmitter = transform.FindChild("Fire").GetComponent<ParticleSystem>();
 		fireEmitter.enableEmission = false;
+
+		radius = 0.25f;
+		dead = false;
 	}
 
 	/*
@@ -77,6 +81,7 @@ public class Unit : Steering {
 
 	void Awake() {
 		neighbours = new Neighbours<Unit>();
+		nearbyBuildings = new Neighbours<Building>();
 		statusMap = new StatusMap(this);
 		actionMap = new ActionMap(this);
 		actionMap.add(0, new Ability(0.1f));
@@ -107,9 +112,8 @@ public class Unit : Steering {
 	}
 
 	override public void FixedUpdate () {
-		if (statusMap.has(State.ANIMATION)) {
-			brake();
-			turnToward(targetDir);
+		if (!canMove()) {
+			brake ();
 		}
 		// containment (walls)
 		// avoid (obstacles)
@@ -122,13 +126,28 @@ public class Unit : Steering {
 		}
 		statusMap.update(Time.fixedDeltaTime);
 		actionMap.update(Time.fixedDeltaTime);
+		float maxdd = range * range;
 		if (canAttack()) {
-			float maxdd = range * range;
 			foreach (Tuple<float, Unit> tuple in neighbours) {
 				if (tuple.First > maxdd ) {
 					break;
 				}
 				Unit other = tuple.Second;
+				if (other.owner != owner) {
+					cast(ATTACK, other);
+					// look at
+					Vector2 offset = other.transform.position - transform.position;
+					targetDir = Mathf.Rad2Deg * Mathf.Atan2(offset.y, offset.x);
+					break;
+				}
+			}
+		}
+		if (canAttack()) {
+			foreach (Tuple<float, Building> tuple in nearbyBuildings) {
+				if (tuple.First > maxdd ) {
+					break;
+				}
+				Building other = tuple.Second;
 				if (other.owner != owner) {
 					cast(ATTACK, other);
 					// look at
@@ -149,12 +168,14 @@ public class Unit : Steering {
 					resource = tradeDest.resource;
 					carrying = tradeDest.collect(capacity);
 					followPath(owner.getReturnRoute(tradeDest));
-					transform.FindChild("Gold").GetComponent<Renderer>().enabled = true;
+					transform.FindChild("resource").GetComponent<Renderer>().enabled = true;
+					float sz = 0.25f + 0.75f * carrying / capacity;
+					transform.FindChild("resource").localScale = new Vector3(sz,sz,1f);
 				} else if (path.goal == dropoff) {
 					// drop off
 					owner.collect(resource, carrying);
 					carrying = 0f;
-					transform.FindChild("Gold").GetComponent<Renderer>().enabled = false;
+					transform.FindChild("resource").GetComponent<Renderer>().enabled = false;
 					float maxProfit = -1f;
 					foreach (Building building in owner.tradeWith) {
 						Path tradeRoute = owner.getTradeRoute(building);
@@ -190,6 +211,8 @@ public class Unit : Steering {
 				}
 			}
 		}
+		// repairs
+
 		base.FixedUpdate();
 	}
 
@@ -236,6 +259,12 @@ public class Unit : Steering {
 		followPath(newPath);
 	}
 
+	public void stop() {
+		hasDest = false;
+		setTradeDest(null);
+		path = null;
+	}
+
 	public void setGroup(UnitGroup newGroup) {
 		if (group != null) {
 			group.Remove(this);
@@ -262,19 +291,25 @@ public class Unit : Steering {
 		selected = false;
 	}
 
-	public void damage(int amount) {
+	public void damage(Player attacker, int amount) {
 		health = Mathf.Max (0, health - amount);
 		if (health == 0) {
-			dead = true;
+			dead = true;setTradeDest(null);
 		}
 	}
 
-	public void fire(Unit target) {
+	public void fire(Attackable target) {
+		if (target.dead) return;
 		GameObject gun = transform.FindChild("Gun").gameObject;
 		Shot shot = Instantiate(bulletObj).GetComponent<Shot>();
-		shot.transform.position = gun.transform.position;
-		shot.transform.rotation = gun.transform.rotation;
-		shot.GetComponent<Rigidbody2D>().velocity = 20 * gun.transform.right;
+		shot.owner = owner;
+		float r = 0.25f;
+		shot.transform.position = gun.transform.position + new Vector3(Random.Range(-r, r), Random.Range(-r,r),0);
+		Vector2 offset = target.transform.position - gun.transform.position;
+		float angle = Mathf.Rad2Deg * Mathf.Atan2(offset.y, offset.x);
+		shot.transform.localEulerAngles = new Vector3(0,0,angle);
+		//shot.transform.rotation = gun.transform.rotation;
+		shot.GetComponent<Rigidbody2D>().velocity = 20 * shot.transform.right;
 		shot.setTarget(target);
 	}
 	
@@ -283,7 +318,7 @@ public class Unit : Steering {
 	 */
 	
 	private bool canMove() {
-		return !statusMap.has(State.ANIMATION);
+		return true;// !statusMap.has(State.ANIMATION);
 	}
 	
 	private bool canCast() {

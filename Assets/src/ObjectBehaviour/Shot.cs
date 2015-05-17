@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 public class Shot : Steering {
 
-	private Unit target;
+	private Attackable target;
+	public Player owner;
 
 	// Use this for initialization
 	override public void Start () {
@@ -39,11 +40,11 @@ public class Shot : Steering {
 		}
 	}
 
-	public void setTarget(Unit u) {
+	public void setTarget(Attackable u) {
 		target = u;
 	}
 
-	private void hit(Unit u) {
-		u.damage(1);
+	private void hit(Attackable u) {
+		u.damage(owner, 1);
 	}
 }

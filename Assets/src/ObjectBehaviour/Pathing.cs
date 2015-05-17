@@ -283,7 +283,7 @@ public class Pathing
         if (!foundDest || t2Set.Contains(t1)) { // fix for path to current tile when current tile is a wall
             // no path found
             points.Add(t1);
-        } else if (destTile != null) {
+        } else if (foundDest) {
 			// it should have stopped after exactly one item in t2set was reached
 			PathNode prevN = nodes[destTile];
             while (prevN.parent != null) {

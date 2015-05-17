@@ -19,7 +19,7 @@ public class Status
 	public virtual void begin(Unit owner) {
 		switch (type) {
 		case State.ANIMATION:
-			owner.canTurn = false;
+			//owner.canTurn = false;
 			break;
 		}
 	}
@@ -27,7 +27,7 @@ public class Status
 	public virtual void expire(Unit owner) {
 		switch (type) {
 		case State.ANIMATION:
-			owner.canTurn = true;
+			//owner.canTurn = true;
 			break;
 		}
 	}

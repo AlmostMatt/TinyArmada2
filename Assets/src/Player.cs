@@ -61,7 +61,7 @@ public class Player
 		foreach (Resource res in Enum.GetValues(typeof(Resource))) {
 			resources[res] = 0f;
 		}
-		collect (Resource.FOOD, 90f); // temporary fix for spawning units on top of each other resulting in NaN avoidance
+		collect (Resource.FOOD, 200f); // temporary fix for spawning units on top of each other resulting in NaN avoidance
 		collect (Resource.GOLD, 50f);
 	}
 	
@@ -112,12 +112,15 @@ public class Player
 	
 	public void toggleTrading(Building building) {
 		if (tradeWith.Contains(building)) {
+			List<Unit> toStop = new List<Unit>(unitsTrading[building]);
 			tradeWith.Remove(building);
+			foreach (Unit u in toStop) {
+				u.stop();
+			}
 		} else {
 			tradeWith.Add(building);
 			getTradeRoute(building); // force tradeRoute to be calculated
 		}
-		building.setOwner(this);
 	}
 
 	public HashSet<Building> tradeBuildings() {

@@ -19,7 +19,7 @@ public class Ability
 	public Ability (float cooldown)
 	{
 		cd = 0f;
-		castTime = 0.15f;
+		castTime = 0.05f;
 		maxcd = cooldown;
 	}
 
@@ -51,6 +51,6 @@ public class Ability
 		// override this
 
 		// attack
-		owner.fire((Unit) target);
+		owner.fire((Attackable) target);
 	}
 }
