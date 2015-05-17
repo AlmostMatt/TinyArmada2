@@ -43,6 +43,13 @@ public class Building : MonoBehaviour {
 		return amountTaken;
 	}
 
+	public float expectedProfit(float arrivalDelay) {
+		// TODO: take other traders into account?
+		float expectedAmount = Mathf.Min(amount + productionRate * arrivalDelay, maxAmount);
+		return expectedAmount;
+	}
+	
+
 	public void init(Vector2 tileCoordinate, BuildingType buildingType) {
 		type = buildingType;
 		tilePos = tileCoordinate;

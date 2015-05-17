@@ -42,7 +42,33 @@ public class Path
 
     public Vector2 nextPoint() {
         return points[0];
-    }
+	}
+	
+	public Path copy() {
+		Path newPath = new Path();
+		newPath.start = start;
+		newPath.goal = goal;
+		newPath.destRadius = destRadius;
+		newPath.length = length;
+		newPath.arrived = false;
+		newPath.points.AddRange(points);
+		return newPath;
+	}
+
+	public Path reversedCopy() {
+		Path newPath = copy();
+		newPath.start = goal;
+		newPath.goal = start;
+		newPath.points.Reverse();
+		// generally the start is not a point in the path
+		if (newPath.points[0] == newPath.start) {
+			newPath.points.RemoveAt(0);
+		}
+		if (newPath.points.Count == 0 || newPath.points[newPath.points.Count - 1] != newPath.goal) {
+			newPath.points.Add(newPath.goal);
+		}
+		return newPath;
+	}
 }
 
 public class PathNode : PriorityQueueNode

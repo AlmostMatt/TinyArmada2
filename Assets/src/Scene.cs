@@ -23,6 +23,9 @@ public class Scene : MonoBehaviour {
 	public UnityEngine.UI.Text[] resources;
 	public RadialMenu radial;
 
+	public bool paused = false;
+	public int HUMAN_PLAYER = 1;
+
 	// Use this for initialization
 	void Start () {
 		singleton = this;
@@ -33,8 +36,11 @@ public class Scene : MonoBehaviour {
 		// create players
 		for (int i = 0; i <= 4; i++) {
 			players.Add(new Player(i));
+			if (players[i].isHuman) {
+				HUMAN_PLAYER = i;
+				players[i].setGUI(resources);
+			}
 		}
-		players[1].setGUI(resources);
 
 		//map = GetComponent<Map>();
 		map.generateMap(players);
@@ -99,12 +105,18 @@ public class Scene : MonoBehaviour {
 			newUnit.setGroup(newGroup);
 			groups.Add(newGroup);
 		}
+		Vector3 offset = (Vector3) building.getDock() - building.gamePos;
+		newUnit.moveTo(building.gamePos + 2.5f * offset, newUnit.radius);
 	}
 
 	// Update is called once per frame
 	void Update () {
 		handleInput();
-			
+
+		foreach (Player p in players) {
+			p.think();
+		}
+
 		// update group positions for hud/interactions
 		groups.RemoveWhere(grp => grp.isEmpty());
 		foreach (UnitGroup grp in groups) {
@@ -152,14 +164,14 @@ public class Scene : MonoBehaviour {
 			foreach(Building building in buildings) {
 				float dist = Vector2.Distance(clickPos, building.gamePos);
 				if (dist < 0.75f) {
-					if (building.type == BuildingType.BASE) {
+					if (building.type == BuildingType.BASE && building.owner.isHuman) {
 						List<Sprite> icons = new List<Sprite>();
 						foreach (UnitType uType in building.getTrains()) {
 							icons.Add(UnitData.getIcon(uType));
 						}
 						radial.mouseDown(Camera.main.WorldToScreenPoint(building.transform.position),
 						                 icons, building.trainUnit);
-					} else {
+					} else if (building.type == BuildingType.COLONY) {
 						players[1].toggleTrading(building);
 					}
 					break;

@@ -8,6 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -20,12 +21,19 @@ public class Player
 	public List<Unit> units = new List<Unit>(); // units add themselves
 	public List<Building> buildings = new List<Building>(); // buildings add themselves
 
-	public HashSet<Building> tradeWith = new HashSet<Building>();
 
 	public bool isHuman = false;
 	public bool isNeutral = false;
 	public Dictionary<Resource, float> resources;
 	public Dictionary<Resource, UnityEngine.UI.Text> resourceText;
+
+	// the set of buildings you want to trade with
+	public HashSet<Building> tradeWith = new HashSet<Building>();
+
+	// optimal route from dock to each tradeWith 
+	private Dictionary<Building, Path> tradeRoute = new Dictionary<Building, Path>();
+	// list of units currently heading to a given building
+	private Dictionary<Building, HashSet<Unit>> unitsTrading = new Dictionary<Building, HashSet<Unit>>();
 
 	public Player (int pnum)
 	{
@@ -53,7 +61,7 @@ public class Player
 		foreach (Resource res in Enum.GetValues(typeof(Resource))) {
 			resources[res] = 0f;
 		}
-		collect (Resource.FOOD, 100f);
+		collect (Resource.FOOD, 90f); // temporary fix for spawning units on top of each other resulting in NaN avoidance
 		collect (Resource.GOLD, 50f);
 	}
 	
@@ -107,6 +115,7 @@ public class Player
 			tradeWith.Remove(building);
 		} else {
 			tradeWith.Add(building);
+			getTradeRoute(building); // force tradeRoute to be calculated
 		}
 		building.setOwner(this);
 	}
@@ -121,5 +130,60 @@ public class Player
 		resourceText[Resource.GOLD] = resText[1];
 		amountChanged(Resource.FOOD);
 		amountChanged(Resource.GOLD);
+	}
+
+	public Building getBase() {
+		return buildings[0];
+	}
+	
+	public Path getTradeRoute(Building building) {
+		if (!tradeRoute.ContainsKey(building)) {
+			tradeRoute[building] = Pathing.findPath(getBase().getDock(), building.getDock(), 0.25f);
+			unitsTrading[building] = new HashSet<Unit>();
+		}
+		return tradeRoute[building].copy();
+	}
+
+	public Path getReturnRoute(Building building) {
+		return tradeRoute[building].reversedCopy();
+	}
+
+	public HashSet<Unit> getTraders(Building building) {
+		return unitsTrading[building];
+	}
+	
+	public void headingTo(Unit u, Building b) {
+		unitsTrading[b].Add(u);
+	}
+
+	public void noLongerHeadingTo(Unit u, Building b) {
+		unitsTrading[b].Remove(u);
+	}
+	
+	//TODO: add scene state / unit list or whatever else is needed here later
+	public void think() {
+		if (isHuman) return;
+		if (!isNeutral) {
+			if (has (UnitData.getCost(UnitType.MERCHANT))) {
+				//TODO: change trainunit to take unit type argument
+				getBase().trainUnit(0); // UnitType.MERCHANT);
+			}
+			// TODO: add to tradewith if adding would yield higher profit than any existing building in tradewith
+			while (tradeWith.Count < Mathf.Min(8, 1 + units.Count)) {
+				Building closest = null;
+				float routeLen = float.MaxValue;
+				foreach (Building building in Scene.get().buildings) {
+					if (tradeWith.Contains(building) || building.type != BuildingType.COLONY) continue;
+					float distmin = (building.getDock() - getBase().getDock()).magnitude;
+					if (distmin > routeLen) continue;
+					Path p = getTradeRoute(building);
+					if (p.length < routeLen) {
+						routeLen = p.length;
+						closest = building;
+					}
+				}
+				toggleTrading(closest);
+			}
+		}
 	}
 }

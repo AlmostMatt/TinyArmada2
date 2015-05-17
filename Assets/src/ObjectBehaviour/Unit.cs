@@ -139,43 +139,54 @@ public class Unit : Steering {
 			}
 		}
 		if (canTrade()) {
-			// traders
-			// only need to rethink onSpawn, on drop off at base, on somebody else trading before me or wanting to take my trade route
-			// or if someone else stops trading, changes their mind, or dies
-			if (carrying > 0f) {
-				// heading home
-				// for now home is the 1st building owned by a player
-				if (hasDest && path.arrived) {
+			bool isIdle = false;
+
+			if (hasDest && path.arrived) {
+				//decide what to do next
+				Vector2 dropoff = owner.getBase().getDock();
+				if (tradeDest != null && path.goal == tradeDest.getDock()) {
+					// pick up
+					resource = tradeDest.resource;
+					carrying = tradeDest.collect(capacity);
+					followPath(owner.getReturnRoute(tradeDest));
+					transform.FindChild("Gold").GetComponent<Renderer>().enabled = true;
+				} else if (path.goal == dropoff) {
+					// drop off
 					owner.collect(resource, carrying);
 					carrying = 0f;
 					transform.FindChild("Gold").GetComponent<Renderer>().enabled = false;
-					hasDest = false;
-				}
-			} else if (tradeDest == null  && !hasDest) {
-				// pick a building
-				// TODO: alternatively, pick building in tradeWith that has max current amount - capacity * number of others
-				// TODO: factor other units and expected profit into account
-				Dictionary<Vector2, Building> destBuildingMap = new Dictionary<Vector2, Building>();
-				HashSet<Vector2> dests = new HashSet<Vector2>();
-				foreach (Building building in Scene.get().buildings) {
-					if (building.type == BuildingType.COLONY) {
-						// TODO: handle the case of 2 buildings on the same tile
-						// 			(pathing will pick one arbitratily)
-						destBuildingMap[building.getDock()] = building;
-						dests.Add(building.getDock());
+					float maxProfit = -1f;
+					foreach (Building building in owner.tradeWith) {
+						Path tradeRoute = owner.getTradeRoute(building);
+						float expectedProfit = Mathf.Max(building.expectedProfit(tradeRoute.length)
+														 - capacity * owner.getTraders(building).Count, 0f);
+						expectedProfit = expectedProfit / (2 * tradeRoute.length);
+						if (expectedProfit > maxProfit) {
+							maxProfit = expectedProfit;
+							setTradeDest(building);
+							followPath(tradeRoute);
+						}
 					}
+				} else if (carrying > 0f) {
+					moveTo(dropoff, radius);
+				} else {
+					isIdle = true;
 				}
-				Path newPath = Pathing.findShortestPath(transform.position, dests, radius);
-				tradeDest = destBuildingMap[newPath.goal];
-				followPath(newPath);
-			} else if (tradeDest != null) {
-				// heading somewhere
-                if (hasDest && path.arrived) {
-					resource = tradeDest.resource;
-					carrying = tradeDest.collect(capacity);
-					moveTo(owner.buildings[0].getDock(), radius);
-					tradeDest = null;
-					transform.FindChild("Gold").GetComponent<Renderer>().enabled = true;
+			}
+			if (isIdle || !hasDest) {
+				// stopped in middle of nowhere
+				float maxProfit = -1f;
+				foreach (Building building in owner.tradeWith) {
+					Path tradeRoute = Pathing.findPath(transform.position, building.getDock(), radius);
+					float expectedProfit = Mathf.Max(building.expectedProfit(tradeRoute.length)
+					                                 - capacity * owner.getTraders(building).Count, 0f);
+					float tripDuration = tradeRoute.length + owner.getReturnRoute(building).length;
+					expectedProfit = expectedProfit / tripDuration;
+					if (expectedProfit > maxProfit) {
+						maxProfit = expectedProfit;
+						setTradeDest(building);
+						followPath(tradeRoute);
+					}
 				}
 			}
 		}
@@ -215,6 +226,9 @@ public class Unit : Steering {
 	public void followPath(Path newPath) {
 		path = newPath;
 		hasDest = true;
+		if (tradeDest != null && path.goal != tradeDest.getDock()) {
+			setTradeDest(null);
+		}
 	}
 
 	public void moveTo(Vector2 point, float radius) {
@@ -290,5 +304,15 @@ public class Unit : Steering {
 		if (teamColor != null) {
 			teamColor.color = owner.color;
 		}
+	}
+
+	public void setTradeDest(Building building) {
+		if (tradeDest != null) {
+			owner.noLongerHeadingTo(this, tradeDest);
+		}
+		if (building != null) {
+			owner.headingTo(this, building);
+		}
+		tradeDest = building;
 	}
 }
