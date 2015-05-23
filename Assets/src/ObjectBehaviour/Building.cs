@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public enum BuildingType {BASE=0, COLONY=1};
 
-public class Building : MonoBehaviour, Attackable {
+public class Building : MonoBehaviour, Attackable, Clickable {
 	
 	public bool dead {get; set;}
 	public Player owner;
@@ -14,7 +14,11 @@ public class Building : MonoBehaviour, Attackable {
 	public Resource resource = Resource.FOOD;
 	private float productionRate = 1f;
 
+	// attackable interface
 	public float radius {get; set;}
+	// clickable interface
+	public ClickRegion clickArea = new CircleRegion(0.7f);
+
 	public float influenceRadius;
 	
 	private int maxHealth = 10;
@@ -106,6 +110,11 @@ public class Building : MonoBehaviour, Attackable {
 	public void setOwner(Player p) {
 		if (owner != null) {
 			owner.buildings.Remove(this);
+			if (type == BuildingType.BASE) {
+				foreach (Unit u in owner.units) {
+					u.dead = true;
+				}
+			}
 		}
 		owner = p;
 		p.buildings.Add(this);
@@ -143,6 +152,9 @@ public class Building : MonoBehaviour, Attackable {
 		return dock.position;
 	}
 
+	/* 
+	 * ATTACKABLE 
+	 */
 	public void damage(Player attacker, int amount) {
 		health -= amount;
 		if (health <= 0) {
@@ -150,4 +162,46 @@ public class Building : MonoBehaviour, Attackable {
 			setOwner(attacker);
 		}
 	}
+	
+	/* 
+	 * CLICKABLE 
+	 */
+	public bool clickTest(int mouseButton, Vector2 mousePos) {
+		return clickArea.Contains(mousePos - (Vector2) transform.position);
+	}
+
+	public void handleClick(int mouseButton) {
+		if (type == BuildingType.COLONY) {
+			Scene.get().players[Scene.get().HUMAN_PLAYER].toggleTrading(this);
+		}
+	}
+
+	public void handleDrag(int mouseButton, Vector2 offset, Vector2 relativeToClick) {
+
+	}
+	
+	public void setHover(bool isHovering)
+	{
+		if (isHovering) {
+			//transform.FindChild("ring").GetComponent<SpriteRenderer>().color = new Color(1f, 0.7f, 0.7f);
+		} else {
+			//transform.FindChild("ring").GetComponent<SpriteRenderer>().color = Color.white;
+		}
+	}
+
+	public void handleMouseDown(int mouseButton, Vector2 mousePos) {
+		if (type == BuildingType.BASE && owner.isHuman) {
+			List<Sprite> icons = new List<Sprite>();
+			foreach (UnitType uType in getTrains()) {
+				icons.Add(UnitData.getIcon(uType));
+			}
+			Scene.get().radial.mouseDown(Camera.main.WorldToScreenPoint(transform.position),
+			                             icons, trainUnit);
+		}
+	}
+
+	public void handleMouseUp(int mouseButton, Vector2 mousePos) {
+	
+	}
+
 }

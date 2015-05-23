@@ -121,6 +121,11 @@ public class Unit : Steering, Attackable {
 		separate(neighbours);
 		// align with others in the same group
 		// move to destination (queue if necessary)
+		if (group != null) {
+			if (!hasDest || (path.goal - group.getDest()).sqrMagnitude > group.radius * group.radius) {
+				moveTo(group.getDest(), group.radius);
+			}
+		}
 		if (hasDest && canMove ()) {
             path.followPath(this);
 		}

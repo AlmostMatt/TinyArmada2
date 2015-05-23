@@ -2,13 +2,17 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class UnitGroup : IEnumerable<Unit>
+public class UnitGroup : IEnumerable<Unit>, Clickable
 {
 	public Vector2 center;
 	public float radius;
 	public Color color;
 	public int numUnits;
 	private HashSet<Unit> units;
+
+	private Vector2 dest;
+
+	private GroupFlag flag;
 
 	private static Color[] colors = {
 		new Color(1,0,0, 0.8f),
@@ -62,6 +66,57 @@ public class UnitGroup : IEnumerable<Unit>
 		center = center/numUnits;
 		// each has radius 0.25 and area pi r 2
 		// so n of them has total area n pi r 2 => scale radius by sqrt(n)
+	}
+
+	public void setFlag(GameObject flagObject) {
+		flag = flagObject.GetComponent<GroupFlag>();
+		flag.setGroup(this);
+		flag.transform.position = dest;
+	}
+
+	public void cleanup() {
+		flag.cleanup();
+	}
+	
+	public void setDest(Vector2 d) {
+		dest = d;
+		flag.transform.position = d;
+	}
+	
+	public Vector2 getDest() {
+		return dest;
+	}
+
+	public GroupFlag getFlag() {
+		return flag;
+	}
+
+	/*
+	 CLICKABLE
+	 */
+	public bool clickTest(int mouseButton, Vector2 mousePos) {
+		return getFlag().clickTest(mouseButton, mousePos);
+	}
+	
+	public void handleClick(int mouseButton) {
+		flag.handleClick(mouseButton);
+	}
+	
+	public void handleDrag(int mouseButton, Vector2 offset, Vector2 relativeToClick) {
+		setDest(dest + offset);
+		//flag.handleDrag(mouseButton, offset, relativeToClick);
+	}
+	public void setHover(bool isHovering)
+	{
+		flag.setHover(isHovering);
+	}
+	
+	public void handleMouseDown(int mouseButton, Vector2 mousePos) {
+		flag.handleMouseDown(mouseButton, mousePos);
+	}
+	
+	public void handleMouseUp(int mouseButton, Vector2 mousePos) {
+		flag.handleMouseUp(mouseButton, mousePos);
 	}
 }
 

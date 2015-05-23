@@ -172,22 +172,26 @@ public class Player
 				//TODO: change trainunit to take unit type argument
 				getBase().trainUnit(0); // UnitType.MERCHANT);
 			}
-			// TODO: add to tradewith if adding would yield higher profit than any existing building in tradewith
-			while (tradeWith.Count < Mathf.Min(8, 1 + units.Count)) {
-				Building closest = null;
-				float routeLen = float.MaxValue;
-				foreach (Building building in Scene.get().buildings) {
-					if (tradeWith.Contains(building) || building.type != BuildingType.COLONY) continue;
-					float distmin = (building.getDock() - getBase().getDock()).magnitude;
-					if (distmin > routeLen) continue;
-					Path p = getTradeRoute(building);
-					if (p.length < routeLen) {
-						routeLen = p.length;
-						closest = building;
-					}
+		}
+		tradeWithNClosest(Mathf.Min(8, 1 + units.Count));
+	}
+
+	public void tradeWithNClosest(int n) {
+		// TODO: add/remove to tradewith if adding would yield higher profit than any existing building in tradewith
+		while (tradeWith.Count < n) {
+			Building closest = null;
+			float routeLen = float.MaxValue;
+			foreach (Building building in Scene.get().buildings) {
+				if (tradeWith.Contains(building) || building.type != BuildingType.COLONY) continue;
+				float distmin = (building.getDock() - getBase().getDock()).magnitude;
+				if (distmin > routeLen) continue;
+				Path p = getTradeRoute(building);
+				if (p.length < routeLen) {
+					routeLen = p.length;
+					closest = building;
 				}
-				toggleTrading(closest);
 			}
+			toggleTrading(closest);
 		}
 	}
 }
