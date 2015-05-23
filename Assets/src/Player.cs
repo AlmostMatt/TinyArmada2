@@ -20,7 +20,7 @@ public class Player
 	public int number;
 	public List<Unit> units = new List<Unit>(); // units add themselves
 	public List<Building> buildings = new List<Building>(); // buildings add themselves
-
+	public List<UnitGroup> unitgroups = new List<UnitGroup>(); // groups add themselves
 
 	public bool isHuman = false;
 	public bool isNeutral = false;
@@ -61,7 +61,7 @@ public class Player
 		foreach (Resource res in Enum.GetValues(typeof(Resource))) {
 			resources[res] = 0f;
 		}
-		collect (Resource.FOOD, 200f); // temporary fix for spawning units on top of each other resulting in NaN avoidance
+		collect (Resource.FOOD, 600f); // temporary fix for spawning units on top of each other resulting in NaN avoidance
 		collect (Resource.GOLD, 50f);
 	}
 	

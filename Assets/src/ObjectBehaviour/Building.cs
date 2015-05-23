@@ -6,11 +6,14 @@ public enum BuildingType {BASE=0, COLONY=1};
 
 public class Building : MonoBehaviour, Attackable, Clickable {
 	
+	[HideInInspector]
 	public bool dead {get; set;}
+	[HideInInspector]
 	public Player owner;
 
 	private float amount = 0f;
 	public float maxAmount = 50f;
+	[HideInInspector]
 	public Resource resource = Resource.FOOD;
 	private float productionRate = 1f;
 
@@ -24,8 +27,10 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 	private int maxHealth = 10;
 	private int health;
 	private float hpPercent = 1f;
-
+	
+	[HideInInspector]
 	public Vector2 tilePos;
+	[HideInInspector]
 	public Vector3 gamePos;
 	public BuildingType type;
 	private Transform dock;
@@ -156,6 +161,9 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 	 * ATTACKABLE 
 	 */
 	public void damage(Player attacker, int amount) {
+		if (attacker == owner) {
+			return;
+		}
 		health -= amount;
 		if (health <= 0) {
 			health = maxHealth;

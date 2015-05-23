@@ -19,8 +19,9 @@ public class Unit : Steering, Attackable {
 	private float destRadius;
 
 	private float targetDir; // if this object is casting an ability in a direction, turn toward this)
-
-	private UnitGroup group = null;
+	
+	[HideInInspector]
+	public UnitGroup group = null;
 
 	private int maxHealth = 10;
 	private int health;
@@ -28,17 +29,26 @@ public class Unit : Steering, Attackable {
 
 	private StatusMap statusMap;
 	private ActionMap actionMap;
+	[HideInInspector]
 	public Neighbours<Unit> neighbours;
+	[HideInInspector]
 	public Neighbours<Building> nearbyBuildings;
-
+	
+	[HideInInspector]
 	public bool dead {get; set;}
+	[HideInInspector]
 	public Player owner;
+	[HideInInspector]
 	public UnitType type;
 
 	// trading
+	[HideInInspector]
 	public float carrying;
+	[HideInInspector]
 	public Resource resource;
+	[HideInInspector]
 	public float capacity = 1f;
+	[HideInInspector]
 	public Building tradeDest;
 
 	private SpriteRenderer teamColor;

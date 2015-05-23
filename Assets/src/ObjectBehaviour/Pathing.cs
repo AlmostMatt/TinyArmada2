@@ -172,16 +172,26 @@ public class Pathing
 		HashSet<Vector2> t2Set = new HashSet<Vector2>();
 		// map tile to point for more precision
 		Dictionary<Vector2, Vector2> goalMap = new Dictionary<Vector2, Vector2>();
+		bool possible = false;
 		foreach (Vector2 p2 in p2Set) {
 			Vector2 t2 = map.gameToMap(p2);
 			goalMap[t2] = p2;
 			t2Set.Add(t2);
+			if (map.isWalkable(map.getTile(t2))) {
+				possible = true;
+			}
 		}
 		Path path = new Path();
 		path.start = p1;
 		path.destRadius = destRadius;
+		if (!possible) {
+			path.goal = path.start;
+			path.points.Add(path.goal);
+			path.length = 0f;
+			return path;
+		}
 		// try cached partial path (recursively)
-		
+
 		// compute path, (heirarchical?)
 		List<Vector2> tiles = astar(t1, t2Set);
 		// smooth path

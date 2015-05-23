@@ -94,7 +94,6 @@ public class Scene : MonoBehaviour {
 		if (unitType != UnitType.MERCHANT) {
 			UnitGroup newGroup = createUnitGroup();
 			newUnit.setGroup(newGroup);
-			groups.Add(newGroup);
 			newGroup.setDest(building.gamePos + 2.5f * offset);
 		} else {
 			newUnit.moveTo(building.gamePos + 1.5f * offset, newUnit.radius);
@@ -124,6 +123,12 @@ public class Scene : MonoBehaviour {
 		foreach (UnitGroup grp in groups) {
 			if (grp.isEmpty()) {
 				grp.cleanup();
+				if (clickObject == grp) {
+					clickObject = null;
+				}
+				if (hoverObject == grp) {
+					hoverObject = null;
+				}
 			}
 		}
 		groups.RemoveWhere(grp => grp.isEmpty());
@@ -297,7 +302,6 @@ public class Scene : MonoBehaviour {
 				foreach (Unit unit in hover) {
 					unit.moveTo(newGroup.center, newGroup.radius);
 				}
-				groups.Add(newGroup);
 			}
 			selecting = false;
 			foreach( Unit unit in hover) {
@@ -337,26 +341,6 @@ public class Scene : MonoBehaviour {
 	}
 	
 	void OnGUI() {
-		//GUIStyle buttonStyle = GUI.skin.button;
-
-		foreach (UnitGroup grp in groups) {
-			GUI.color = grp.color;
-			drawCircle(worldToGUI(grp.center), worldToGUI(grp.radius));
-		}
-
-		if (selecting) {
-			Vector2 p1 = worldToGUI(clickPos);
-			Vector2 p2 = getGUIMousePos();
-			Vector2 pavg = (p1 + p2)/2;
-			float r = (p2 - pavg).magnitude;
-			GUI.color = new Color(0,1,0, 0.5f);
-			drawCircle(pavg, r);
-		}
-
-		// Minimap
-		Rect mapRect = new Rect(10,10,100,100);
-		GUI.color = Color.gray;
-		//GUI.Button(mapRect, "MiniMap");
 
 		// Unit groups
 		//for (int i=0; i<4; ++i) {
@@ -382,10 +366,11 @@ public class Scene : MonoBehaviour {
 		return singleton;
 	}
 
-	private UnitGroup createUnitGroup() {
+	public UnitGroup createUnitGroup() {
 		UnitGroup group = new UnitGroup();
 		GameObject flag = Instantiate(flagObject);
 		group.setFlag(flag);
+		groups.Add(group);
 		return group;
 	}
 }
