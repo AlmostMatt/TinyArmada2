@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Unit : Steering, Attackable {
+public class Unit : MonoBehaviour, Attackable, Actor {
 	//TODO: call getComponent less often
 	private int ATTACK = 0;
 	private float range = 1f;
@@ -30,7 +30,7 @@ public class Unit : Steering, Attackable {
 	private StatusMap statusMap;
 	private ActionMap actionMap;
 	[HideInInspector]
-	public Neighbours<Unit> neighbours;
+	public Neighbours<Unit> nearbyUnits;
 	[HideInInspector]
 	public Neighbours<Building> nearbyBuildings;
 	
@@ -62,12 +62,10 @@ public class Unit : Steering, Attackable {
 		case UnitType.MERCHANT:
 		case UnitType.TRADER:
 			capacity = 25f;
-			MAX_V = 2f;
-			ACCEL = 5;
+			GetComponent<Steering>().setSpeed(2f, 5f);
 			break;
 		default:
-			MAX_V = 1.5f;
-			ACCEL = 5;
+			GetComponent<Steering>().setSpeed(1.5f, 5f);
 			range = 3f;
 			break;
 		}
@@ -90,7 +88,7 @@ public class Unit : Steering, Attackable {
 	 */
 
 	void Awake() {
-		neighbours = new Neighbours<Unit>();
+		nearbyUnits = new Neighbours<Unit>();
 		nearbyBuildings = new Neighbours<Building>();
 		statusMap = new StatusMap(this);
 		actionMap = new ActionMap(this);
@@ -98,8 +96,7 @@ public class Unit : Steering, Attackable {
 	}
 
 	// Use this for initialization
-	override public void Start () {
-		base.Start();
+	public void Start () {
 		if (sprites != null && sprites.Length > 0) {
 			Sprite spr = sprites[Random.Range(0, sprites.Length)];
 			SpriteRenderer renderer = GetComponent<SpriteRenderer>();
@@ -121,14 +118,16 @@ public class Unit : Steering, Attackable {
 		}
 	}
 
-	override public void FixedUpdate () {
+	public void FixedUpdate () {
+		Steering steering = GetComponent<Steering>();
+		float maxSpeed = steering.getMaxSpeed();
 		if (!canMove()) {
-			brake ();
+			steering.brake();
 		}
 		// containment (walls)
 		// avoid (obstacles)
 		// separate from 'too close' others
-		separate(neighbours);
+		steering.separate(nearbyUnits);
 		// align with others in the same group
 		// move to destination (queue if necessary)
 		if (group != null) {
@@ -143,11 +142,11 @@ public class Unit : Steering, Attackable {
 		actionMap.update(Time.fixedDeltaTime);
 		float maxdd = range * range;
 		if (canAttack()) {
-			foreach (Tuple<float, Unit> tuple in neighbours) {
-				if (tuple.First > maxdd ) {
+			foreach (Neighbour<Unit> otherUnit in nearbyUnits) {
+				if (otherUnit.dd > maxdd ) {
 					break;
 				}
-				Unit other = tuple.Second;
+				Unit other = otherUnit.obj;
 				if (other.owner != owner) {
 					cast(ATTACK, other);
 					// look at
@@ -158,11 +157,11 @@ public class Unit : Steering, Attackable {
 			}
 		}
 		if (canAttack()) {
-			foreach (Tuple<float, Building> tuple in nearbyBuildings) {
-				if (tuple.First > maxdd ) {
+			foreach (Neighbour<Building> building in nearbyBuildings) {
+				if (building.dd > maxdd ) {
 					break;
 				}
-				Building other = tuple.Second;
+				Building other = building.obj;
 				if (other.owner != owner) {
 					cast(ATTACK, other);
 					// look at
@@ -194,9 +193,9 @@ public class Unit : Steering, Attackable {
 					float maxProfit = -1f;
 					foreach (Building building in owner.tradeWith) {
 						Path tradeRoute = owner.getTradeRoute(building);
-						float expectedProfit = Mathf.Max(building.expectedProfit(tradeRoute.length / MAX_V)
+						float expectedProfit = Mathf.Max(building.expectedProfit(tradeRoute.length / maxSpeed)
 														 - capacity * owner.getTraders(building).Count, 0f);
-						expectedProfit = MAX_V * expectedProfit / (2 * tradeRoute.length);
+						expectedProfit = maxSpeed * expectedProfit / (2 * tradeRoute.length);
 						if (expectedProfit > maxProfit) {
 							maxProfit = expectedProfit;
 							setTradeDest(building);
@@ -214,9 +213,9 @@ public class Unit : Steering, Attackable {
 				float maxProfit = -1f;
 				foreach (Building building in owner.tradeWith) {
 					Path tradeRoute = Pathing.findPath(transform.position, building.getDock(), radius);
-					float expectedProfit = Mathf.Max(building.expectedProfit(tradeRoute.length / MAX_V)
+					float expectedProfit = Mathf.Max(building.expectedProfit(tradeRoute.length / maxSpeed)
 					                                 - capacity * owner.getTraders(building).Count, 0f);	
-					float tripDuration = tradeRoute.length / MAX_V + owner.getReturnRoute(building).length / MAX_V;
+					float tripDuration = tradeRoute.length / maxSpeed + owner.getReturnRoute(building).length / maxSpeed;
 					expectedProfit = expectedProfit / tripDuration;
 					if (expectedProfit > maxProfit) {
 						maxProfit = expectedProfit;
@@ -227,8 +226,6 @@ public class Unit : Steering, Attackable {
 			}
 		}
 		// repairs
-
-		base.FixedUpdate();
 	}
 
 	// called after (fixed)update => after objects move

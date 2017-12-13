@@ -22,9 +22,10 @@ public class Path
         Vector2 next = nextPoint();
         float nextRadius = (points.Count == 1) ? destRadius : u.radius;
         float dd = (next - (Vector2) u.transform.position).sqrMagnitude;
+		Steering steering = u.GetComponent<Steering>();
         if (dd < nextRadius * nextRadius) {
             if (points.Count == 1) {
-                u.brake();
+				steering.brake();
                 arrived = true;
             } else {
                 points.RemoveAt(0);
@@ -33,9 +34,9 @@ public class Path
             }
         } else {
             if (points.Count == 1) {
-                u.arrival(next);
+				steering.arrival(next);
             } else {
-                u.seek(next);
+				steering.seek(next);
             }
         }
     }

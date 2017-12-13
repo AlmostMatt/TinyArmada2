@@ -2,17 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Shot : Steering {
+public class Shot : MonoBehaviour {
 
 	private Attackable target;
 	public Player owner;
 
 	// Use this for initialization
-	override public void Start () {
-		base.Start();
-		
-		MAX_V = 10f;
-		ACCEL = 60f;
+	public void Start () {
+		GetComponent<Steering>().setSpeed(10f, 60f);
 	}
 	
 	// Update is called once per frame
@@ -24,7 +21,7 @@ public class Shot : Steering {
 		//transform.localEulerAngles = new Vector3(0, 0, angle);
 	}
 
-	override public void FixedUpdate () {
+	public void FixedUpdate () {
 		if (target == null || target.dead) {
 			Destroy(gameObject);
 		} else {
@@ -34,9 +31,7 @@ public class Shot : Steering {
 				Destroy(gameObject);
 			}
 			// it looks a bit weird to have an arrow 'lead' a target.
-			seek(target.transform.position);
-			//pursue(target);
-			base.FixedUpdate();
+			GetComponent<Steering>().seek(target.transform.position);
 		}
 	}
 
