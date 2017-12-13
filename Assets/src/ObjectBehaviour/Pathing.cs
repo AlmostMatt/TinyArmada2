@@ -250,7 +250,7 @@ public class Pathing
         // TODO: reverse this to start at t2 and go toward t1 so that inland points fail faster
         // TODO: find nearest water tiles to t2 if t2 is inland
 
-		int MAX_OPEN = 100;
+		int MAX_OPEN = 1000;
         HeapPriorityQueue<PathNode> open = new HeapPriorityQueue<PathNode>(MAX_OPEN);
         Dictionary<Vector2, PathNode> nodes = new Dictionary<Vector2, PathNode>();
         HashSet<Vector2> closed = new HashSet<Vector2>();

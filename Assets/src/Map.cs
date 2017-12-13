@@ -214,7 +214,7 @@ public class Map : MonoBehaviour {
         mesh.vertices = newVerts.ToArray();
         mesh.triangles = newTris.ToArray();
         mesh.uv = newUV.ToArray();
-        mesh.Optimize();
+        ;
         mesh.RecalculateNormals();
 
         // cleanup for next time

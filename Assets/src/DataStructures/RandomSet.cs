@@ -10,7 +10,6 @@ using System.Collections.Generic;
 public class RandomSet<T> : ICollection<T>, IEnumerable<T>, IEnumerable 
     //ISerializable, IDeserializationCallback
 {
-	//TODO: list remove is expensive, have an implicit ignore beyond index n
     private List<T> data = new List<T>();
     private Dictionary<T, int> indexOf = new Dictionary<T, int>();
     private Random rnd;
@@ -23,12 +22,20 @@ public class RandomSet<T> : ICollection<T>, IEnumerable<T>, IEnumerable
     public RandomSet()
     {
         rnd = new Random();
-    }
-    
-    public RandomSet(Random rand)
-    {
-        rnd = rand;
-    }
+	}
+	
+	public RandomSet(Random rand)
+	{
+		rnd = rand;
+	}
+	
+	public RandomSet(IEnumerable<T> collection)
+		: this()
+	{
+		foreach (T other in collection) {
+			Add(other);
+		}
+	}
 
     public bool IsReadOnly { get { return false; } }
 
@@ -71,7 +78,7 @@ public class RandomSet<T> : ICollection<T>, IEnumerable<T>, IEnumerable
             indexOf[data[index]] = index;
         }
         indexOf.Remove(result);
-		data.RemoveAt(data.Count - 1); // TODO: this is too slow.
+		data.RemoveAt(data.Count - 1); // despite the docs, this is constant time
         return result;
     }
     
@@ -85,11 +92,11 @@ public class RandomSet<T> : ICollection<T>, IEnumerable<T>, IEnumerable
 
     public T getRandom() {
         return data[rnd.Next(0,data.Count)];
-    }
-    
-    public T popRandom() {
-        return RemoveAt(rnd.Next(0,data.Count));
-    }
+	}
+	
+	public T popRandom() {
+		return RemoveAt(rnd.Next(0,data.Count));
+	}
     
     // this is generic
     public IEnumerator<T> GetEnumerator() {

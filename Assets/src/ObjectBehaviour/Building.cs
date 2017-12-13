@@ -40,6 +40,58 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 	private SpriteRenderer tradeWith;
 	private SpriteRenderer influence;
 
+	private ParticleSystem fireEmitter;
+
+	public void init(Vector2 tileCoordinate, BuildingType buildingType) {
+		type = buildingType;
+		tilePos = tileCoordinate;
+		Map map = Scene.get().map;
+		gamePos = map.mapToGame(tileCoordinate);
+		transform.position = gamePos;
+		
+		RandomSet<Vector2> rs = new RandomSet<Vector2>();
+		foreach (Vector2 nbor in map.getNeighbours4(tileCoordinate)) {
+			if (map.isWalkable(map.getTile(nbor))) {
+				rs.Add(nbor);
+			}
+		}
+		Vector2 dockSide = rs.popRandom() - tileCoordinate;
+		float angle = Mathf.Rad2Deg * Mathf.Atan2(dockSide.y, dockSide.x);
+		transform.FindChild("dockRotation").localEulerAngles = new Vector3(0f,0f,angle);
+		dock = transform.FindChild("dockRotation/dock");
+		
+		trains.Add(UnitType.MERCHANT);
+		trains.Add(UnitType.GALLEY);
+		trains.Add(UnitType.LONGBOAT);
+		trains.Add(UnitType.TRADER);
+		
+		amount = 0f;
+		health = maxHealth;
+		radius = 0.25f;
+		dead = false;
+		
+		Transform influenceObj = transform.FindChild("influence");
+		influence = influenceObj.GetComponent<SpriteRenderer>();
+		tradeWith = transform.FindChild("tradeWith").GetComponent<SpriteRenderer>();
+		
+		switch(buildingType) {
+		case BuildingType.BASE:
+			influenceRadius = 3f;
+			break;
+		case BuildingType.COLONY:
+		default:
+			influenceRadius = 2.5f;
+			break;
+		}
+		// the buildign itself has a scale
+		float sz = (2f * influenceRadius / influence.sprite.bounds.size.x) * (1f/transform.localScale.x);
+		influenceObj.localScale = new Vector3(sz, sz, 1f);
+		tradeWith.enabled = false;
+		
+		fireEmitter = transform.FindChild("Fire").GetComponent<ParticleSystem>();
+		fireEmitter.enableEmission = false;
+	}
+
 	// Use this for initialization
 	void Start () {
 	}
@@ -64,54 +116,7 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 		float expectedAmount = Mathf.Min(amount + productionRate * arrivalDelay, maxAmount);
 		return expectedAmount;
 	}
-	
 
-	public void init(Vector2 tileCoordinate, BuildingType buildingType) {
-		type = buildingType;
-		tilePos = tileCoordinate;
-		Map map = Scene.get().map;
-		gamePos = map.mapToGame(tileCoordinate);
-		transform.position = gamePos;
-
-		RandomSet<Vector2> rs = new RandomSet<Vector2>();
-		foreach (Vector2 nbor in map.getNeighbours4(tileCoordinate)) {
-			if (map.isWalkable(map.getTile(nbor))) {
-				rs.Add(nbor);
-			}
-		}
-		Vector2 dockSide = rs.popRandom() - tileCoordinate;
-		float angle = Mathf.Rad2Deg * Mathf.Atan2(dockSide.y, dockSide.x);
-		transform.FindChild("dockRotation").localEulerAngles = new Vector3(0f,0f,angle);
-		dock = transform.FindChild("dockRotation/dock");
-
-		trains.Add(UnitType.MERCHANT);
-		trains.Add(UnitType.GALLEY);
-		trains.Add(UnitType.LONGBOAT);
-
-		amount = 0f;
-		health = maxHealth;
-		radius = 0.25f;
-		dead = false;
-	
-		Transform influenceObj = transform.FindChild("influence");
-		influence = influenceObj.GetComponent<SpriteRenderer>();
-		tradeWith = transform.FindChild("tradeWith").GetComponent<SpriteRenderer>();
-
-		switch(buildingType) {
-		case BuildingType.BASE:
-			influenceRadius = 3f;
-			break;
-		case BuildingType.COLONY:
-		default:
-			influenceRadius = 2.5f;
-			break;
-		}
-		// the buildign itself has a scale
-		float sz = (2f * influenceRadius / influence.sprite.bounds.size.x) * (1f/transform.localScale.x);
-		influenceObj.localScale = new Vector3(sz, sz, 1f);
-		tradeWith.enabled = false;
-	}
-	
 	public void setOwner(Player p) {
 		if (owner != null) {
 			owner.buildings.Remove(this);
@@ -168,6 +173,13 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 		if (health <= 0) {
 			health = maxHealth;
 			setOwner(attacker);
+		}
+		if (health < maxHealth) {
+			fireEmitter.enableEmission = true;
+			fireEmitter.startSize = 2f * (1f - health/maxHealth);
+			fireEmitter.emissionRate = 50 * (1f - health/maxHealth);
+		} else {
+			fireEmitter.enableEmission = false;
 		}
 	}
 	

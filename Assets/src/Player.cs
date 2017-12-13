@@ -44,7 +44,9 @@ public class Player
 			isNeutral = true;
 			break;
 		case 1:
-			color = Color.blue;
+			//Color.blue;
+			color = new Color(0.72f, 0.78f, 1f);
+			color = new Color(0.32f, 0.48f, 1f);
 			isHuman = true;
 			break;
 		case 2:
@@ -61,7 +63,7 @@ public class Player
 		foreach (Resource res in Enum.GetValues(typeof(Resource))) {
 			resources[res] = 0f;
 		}
-		collect (Resource.FOOD, 600f); // temporary fix for spawning units on top of each other resulting in NaN avoidance
+		collect (Resource.FOOD, 150f); // temporary fix for spawning units on top of each other resulting in NaN avoidance
 		collect (Resource.GOLD, 50f);
 	}
 	
@@ -168,9 +170,9 @@ public class Player
 	public void think() {
 		if (isHuman) return;
 		if (!isNeutral) {
-			if (has (UnitData.getCost(UnitType.MERCHANT))) {
+			if (has (UnitData.getCost(UnitType.TRADER))) {
 				//TODO: change trainunit to take unit type argument
-				getBase().trainUnit(0); // UnitType.MERCHANT);
+				getBase().trainUnit(3); // UnitType.MERCHANT);
 			}
 		}
 		tradeWithNClosest(Mathf.Min(8, 1 + units.Count));

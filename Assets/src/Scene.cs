@@ -91,7 +91,7 @@ public class Scene : MonoBehaviour {
 		newUnit.init(building.owner, unitType);
 		units.Add(newUnit);
 		Vector3 offset = (Vector3) building.getDock() - building.gamePos;
-		if (unitType != UnitType.MERCHANT) {
+		if (!newUnit.canTrade()) {
 			UnitGroup newGroup = createUnitGroup();
 			newUnit.setGroup(newGroup);
 			newGroup.setDest(building.gamePos + 2.5f * offset);

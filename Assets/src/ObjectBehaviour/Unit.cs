@@ -60,8 +60,8 @@ public class Unit : Steering, Attackable {
 		transform.FindChild("resource").GetComponent<Renderer>().enabled = false;
 		switch (type) {
 		case UnitType.MERCHANT:
+		case UnitType.TRADER:
 			capacity = 25f;
-			ACCEL = 40f;
 			MAX_V = 2f;
 			ACCEL = 5;
 			break;
@@ -309,8 +309,12 @@ public class Unit : Steering, Attackable {
 	public void damage(Player attacker, int amount) {
 		health = Mathf.Max (0, health - amount);
 		if (health == 0) {
-			dead = true;setTradeDest(null);
+			setTradeDest(null);
+			dead = true;
 		}
+		fireEmitter.enableEmission = true;
+		fireEmitter.startSize = 1.5f * (1f - health/maxHealth);
+		fireEmitter.emissionRate = 50 * (1f - health/maxHealth);
 	}
 
 	public void fire(Attackable target) {
@@ -340,12 +344,12 @@ public class Unit : Steering, Attackable {
 		return !statusMap.has(State.ANIMATION);
 	}
 	
-	private bool canAttack() {
-		return type != UnitType.MERCHANT && actionMap.ready(ATTACK) && !statusMap.has(State.ANIMATION);
+	public bool canAttack() {
+		return !canTrade() && actionMap.ready(ATTACK) && !statusMap.has(State.ANIMATION);
 	}
 	
-	private bool canTrade() {
-		return type == UnitType.MERCHANT;
+	public bool canTrade() {
+		return type == UnitType.MERCHANT || type == UnitType.TRADER;
 	}
 
 	public void setOwner(Player p) {
