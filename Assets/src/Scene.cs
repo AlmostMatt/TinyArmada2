@@ -47,7 +47,6 @@ public class Scene : MonoBehaviour {
 				GUIOverlay.get().setPlayer(players[i]);
 			}
 		}
-
 		map.generateMap(players);
 		buildings = map.getBuildings();
 		players[HUMAN_PLAYER].tradeWithNClosest(3);
@@ -130,37 +129,16 @@ public class Scene : MonoBehaviour {
 		}
 	}
 
+	public IEnumerable<UnitGroup> getGroups() {
+		return groups;
+	}
+
 	Rect getRect(Vector2 p1, Vector2 p2) {
 		float x1 = Mathf.Min (p1.x, p2.x);
 		float y1 = Mathf.Min (p1.y, p2.y);
 		float w = Mathf.Abs (p1.x - p2.x);
 		float h = Mathf.Abs (p1.y - p2.y);
 		return new Rect(x1, y1, w, h);
-	}
-
-	void drawCircle(Vector2 p, float r) {
-		Rect rect = getRect(p - new Vector2(r, r),
-		                    p + new Vector2(r, r));
-		GUI.DrawTexture(rect, selectImg);
-	}
-	
-	void OnGUI() {
-
-		// Unit groups
-		//for (int i=0; i<4; ++i) {
-		int i = 0;
-		foreach (UnitGroup grp in groups) {
-			GUI.color = grp.color;
-			Rect groupRect = new Rect(Camera.main.pixelWidth - 55,5 + (50 + 5) * i ,50,50);
-			//i.ToString()
-			string label = grp.numUnits.ToString();
-			if (GUI.Button(groupRect, label)) {
-				//Camera.main.transform.LookAt(grp.center);
-				Vector3 newPos = new Vector3(grp.center.x, grp.center.y, Camera.main.transform.position.z);
-				Camera.main.transform.position = newPos;
-			}
-			++i;
-		}
 	}
 
 	public static Scene get() {
