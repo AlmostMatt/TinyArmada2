@@ -8,8 +8,8 @@ public class Scene : MonoBehaviour {
 	public GameObject unitObject;
 	public Texture2D selectImg;
 	public GameObject flagObject;
-	public UnityEngine.UI.Text[] resources;
-	public RadialMenu radial;
+
+	public Map map;
 
 	[HideInInspector]
 	public List<Unit> units;
@@ -18,19 +18,11 @@ public class Scene : MonoBehaviour {
 	[HideInInspector]
 	public List<Building> buildings;
 	[HideInInspector]
-	public Map map;
-	[HideInInspector]
 	public bool paused = false;
 	[HideInInspector]
 	public int HUMAN_PLAYER = 1;
 
 	private HashSet<UnitGroup> groups;
-	private Vector2 prevMousePos;
-	private Vector2 rClickPos;
-	// left click / drag info
-	private Vector2 clickPos;
-	private Clickable clickObject;
-	private Clickable hoverObject;
 
 	private List<Unit> hover;
 	private bool selecting = false;
@@ -38,9 +30,11 @@ public class Scene : MonoBehaviour {
 	private UnitGroup selected = null;
 	private static Scene singleton;
 
-	// Use this for initialization
-	void Start () {
+	void Awake() {
 		singleton = this;
+	}
+
+	void Start () {
 		units = new List<Unit>();
 		hover = new List<Unit>();
 		groups = new HashSet<UnitGroup>();
@@ -50,37 +44,13 @@ public class Scene : MonoBehaviour {
 			players.Add(new Player(i));
 			if (players[i].isHuman) {
 				HUMAN_PLAYER = i;
-				players[i].setGUI(resources);
+				GUIOverlay.get().setPlayer(players[i]);
 			}
 		}
 
-		//map = GetComponent<Map>();
 		map.generateMap(players);
 		buildings = map.getBuildings();
-
 		players[HUMAN_PLAYER].tradeWithNClosest(3);
-	}
-	
-	Vector2 getWorldMousePos() {
-		Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
-		return ray.origin;
-	}
-
-	Vector2 getGUIMousePos() {
-		return screenToGUI(Input.mousePosition);
-	}
-	
-	Vector2 worldToGUI(Vector2 p) {
-		return screenToGUI(Camera.main.WorldToScreenPoint(p));
-	}
-	
-	float worldToGUI(float f) {
-		// TODO: compute this once and later just multiply f
-		return worldToGUI(new Vector2(f, 0)).x - worldToGUI(new Vector2(0, 0)).x;
-	}
-	
-	Vector2 screenToGUI(Vector2 p) {
-		return new Vector2(p.x, Screen.height - p.y);
 	}
 
 	public void spawnUnit(Building building, UnitType unitType) {
@@ -102,8 +72,6 @@ public class Scene : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		handleInput();
-
 		foreach (Player p in players) {
 			p.think();
 		}
@@ -119,16 +87,13 @@ public class Scene : MonoBehaviour {
 			}
 		}
 
+		// TODO: remove group-related logic
+		// It provided a way to give commands to a group of units, but I want units to be autonomous
 		// update groups (position/empty)
 		foreach (UnitGroup grp in groups) {
 			if (grp.isEmpty()) {
 				grp.cleanup();
-				if (clickObject == grp) {
-					clickObject = null;
-				}
-				if (hoverObject == grp) {
-					hoverObject = null;
-				}
+				// TODO: handle groups that are deleted while selected hovered or clicked
 			}
 		}
 		groups.RemoveWhere(grp => grp.isEmpty());
@@ -137,192 +102,31 @@ public class Scene : MonoBehaviour {
 		}
 
 		// update neighbours
-		foreach (Unit u1 in units) {
-			u1.nearbyUnits.Clear();
-			u1.nearbyBuildings.Clear();
+		foreach (Unit unit in units) {
+			unit.nearbyUnits.Clear();
+			unit.nearbyBuildings.Clear();
 			// compare to previous units, not later units)
-			foreach (Unit u2 in units) {
-				if (u2 == u1) {
+			foreach (Unit otherUnit in units) {
+				if (otherUnit == unit) {
 					break;
 				}
-				float dist = (u1.transform.position - u2.transform.position).sqrMagnitude;
-				u1.nearbyUnits.Add(u2, dist);
+				float dd = (otherUnit.transform.position - unit.transform.position).sqrMagnitude;
+				unit.nearbyUnits.Add(otherUnit, dd);
 			}
 			foreach (Building b in buildings) {
-				float dist = (b.gamePos - u1.transform.position).sqrMagnitude;
-				u1.nearbyBuildings.Add(b, dist);
+				float dist = (b.gamePos - unit.transform.position).sqrMagnitude;
+				unit.nearbyBuildings.Add(b, dist);
 			}
 		}
 	}
 
-	private Clickable getObject(Vector2 position) {
-		Clickable ret = null;
-		// TODO: pick closest object or multiple objects if they overlap
+	public IEnumerable<Clickable> getClickableObjects() {
 		foreach(Building building in buildings) {
-			if (building.clickTest(0, position)) {
-				ret = building;
-			}
+			yield return building;
 		}
 		foreach (UnitGroup grp in groups) {
-			if (grp.clickTest(0, position)) {
-				ret = grp;
-			}
+			yield return grp;
 		}
-		return ret;
-	}
-
-	private void handleInput() {
-		// TODO: generalize right click input and 2 finger input
-		// TODO: use input events
-		Vector2 worldMousePos = getWorldMousePos();
-		/* Camera Pan */
-		if (Input.GetMouseButtonDown(1)) {
-			rClickPos = worldMousePos;
-			radial.cancel();
-		} else if (Input.GetMouseButton(1)) {
-			Vector2 offset = rClickPos - worldMousePos;
-			Camera.main.transform.Translate(offset);
-		}
-
-		if (!Input.GetMouseButton(0)) {
-			Clickable obj = getObject(worldMousePos);
-			if (obj != hoverObject) {
-				if (hoverObject != null) {
-					hoverObject.setHover(false);
-				}
-				if (obj != null) {
-					obj.setHover(true);
-				}
-				hoverObject = obj;
-			}
-		}
-
-		if (Input.GetMouseButtonDown(0)) {
-			if (hoverObject != null) {
-				hoverObject.setHover(false);
-				hoverObject = null;
-			}
-			clickPos = worldMousePos;
-			clickObject = getObject(worldMousePos);
-			if (clickObject != null) {
-				clickObject.handleMouseDown(0, clickPos);
-			}
-		} else if (Input.GetMouseButton(0) && clickObject != null) {
-			Vector2 delta = worldMousePos - prevMousePos;
-			if (delta.x != 0 || delta.y != 0) {
-				Vector2 relativePos = worldMousePos - clickPos;
-				clickObject.handleDrag(0, delta, relativePos);
-			}
-		} else if (Input.GetMouseButtonUp(0) && clickObject != null) {
-			if ((worldMousePos - clickPos).sqrMagnitude < 0.5f * 0.5f) {
-				clickObject.handleClick(0);
-			}
-			clickObject.handleMouseUp(0, worldMousePos);
-		}
-		prevMousePos = worldMousePos;
-		/*
-		//
-
-			float minD = float.MaxValue;
-			selected = null;
-			foreach (UnitGroup grp in groups) {
-				float dist = Vector2.Distance(clickPos, grp.center);
-				if (dist < grp.radius && dist < minD) {
-					minD = dist;
-					selected = grp;
-				}
-			}
-			
-			
-			if (selected == null && radial.visible == false) {
-				selecting = true;
-			}
-		}
-		
-		if (selected != null) {
-			if (Input.GetMouseButton(0)) {
-				foreach (Unit unit in selected) {
-					unit.moveTo(getWorldMousePos(), selected.radius);
-					unit.tradeDest = null;
-				}
-			} else {
-				selected = null;
-			}
-		}
-		
-		if (selecting && Input.GetMouseButton(0)) {
-			foreach( Unit unit in hover) {
-				unit.deselect();
-			}
-			hover.Clear();
-			Vector2 mousePos = getWorldMousePos();
-			Vector2 p = (mousePos + clickPos)/2;
-			float rr = (mousePos - p).sqrMagnitude;
-			//Rect rect = getRect (mousePos, clickPos);
-			foreach( Unit unit in units) {
-				if (!unit.owner.isHuman || unit.type == UnitType.MERCHANT) {
-					continue;
-				}
-				//if (rect.Contains(unit.transform.position)) {
-				if ((((Vector2) unit.transform.position) - p).sqrMagnitude <= rr) {
-					unit.select();
-					hover.Add(unit);
-				}
-			}
-		}
-		if (Input.GetMouseButtonUp(0) && hover.Count == 0) {
-			// tapping on a unit should make it a singleton group
-			Vector2 mousePos = getWorldMousePos();
-			if (Vector2.Distance(mousePos, clickPos) < 0.25f) {
-				Vector2 p = (mousePos + clickPos)/2;
-				Unit closest = null;
-				float minD = 0.25f;
-				foreach(Unit unit in units) {
-					float dist = Vector2.Distance(p, unit.transform.position);
-					if (dist < minD) {
-						closest = unit;
-						minD = dist;
-					}
-				}
-				if (closest != null) {
-					selecting = true;
-					hover.Add (closest);
-				}
-			}
-		}
-		
-		if (selecting && Input.GetMouseButtonUp(0)) {
-			if (hover.Count > 0) {
-				UnitGroup newGroup = createUnitGroup();
-				foreach (Unit unit in hover) {
-					unit.setGroup(newGroup);
-				}
-				newGroup.update();
-				foreach (Unit unit in hover) {
-					unit.moveTo(newGroup.center, newGroup.radius);
-				}
-			}
-			selecting = false;
-			foreach( Unit unit in hover) {
-				unit.deselect();
-			}
-			hover.Clear();
-		}
-		
-		if (Input.GetMouseButtonDown(1)) {
-			// whether or not you clicked on a group, check for single select
-			foreach (Unit unit in hover) {
-				unit.moveTo(getWorldMousePos(), 0.3f * Mathf.Sqrt(hover.Count));
-			}
-		}
-
-		if (Input.GetKeyDown(KeyCode.Q)) {
-			Unit newUnit = Instantiate(unitObject).GetComponent<Unit>();
-			newUnit.transform.position = getWorldMousePos();
-			units.Add(newUnit);
-			newUnit.init (players[HUMAN_PLAYER], UnitType.MERCHANT);
-		}
-		 */
 	}
 
 	Rect getRect(Vector2 p1, Vector2 p2) {
@@ -356,9 +160,6 @@ public class Scene : MonoBehaviour {
 			}
 			++i;
 		}
-
-		// resources/numbers/status
-
 	}
 
 	public static Scene get() {

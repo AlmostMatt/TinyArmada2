@@ -13,7 +13,7 @@ public class Map : MonoBehaviour {
     private int h = 20;
     private float tileSize = 1f;
 	
-	private List<List<Tile>> map;
+	private List<List<Tile>> tileMap;
 	private List<Building> buildings;
 
 	// texture coordinates
@@ -62,13 +62,13 @@ public class Map : MonoBehaviour {
 	}
 
 	public void generateMap(List<Player> players) {
-		map = new List<List<Tile>>();
+		tileMap = new List<List<Tile>>();
 		buildings = new List<Building>();
 		// default - water
 		for (int x = 0; x < w; ++x) {
-			map.Add(new List<Tile>());
+			tileMap.Add(new List<Tile>());
 			for (int y = 0; y < h; ++y) {
-				map[x].Add(Tile.WATER);
+				tileMap[x].Add(Tile.WATER);
 			}
 		}
 
@@ -274,15 +274,15 @@ public class Map : MonoBehaviour {
 	
 	// assumes map coordinates, not game
 	public Tile getTile(int x, int y) {
-		if (x >= 0 && x < map.Count && y >= 0 && y < map[x].Count) {
-			return map[x][y];
+		if (x >= 0 && x < tileMap.Count && y >= 0 && y < tileMap[x].Count) {
+			return tileMap[x][y];
 		} else {
 			return Tile.GRASS; // ideally this doesn't come up much. neighbours don't handle it either.
 		}
 	}
     
     private void setTile(Vector2 coord, Tile value) {
-        map[(int) coord.x][(int) coord.y] = value;
+        tileMap[(int) coord.x][(int) coord.y] = value;
     }
 
     // helper functions for tile/grid manip

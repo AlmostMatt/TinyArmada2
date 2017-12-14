@@ -130,6 +130,7 @@ public class Player
 		return tradeWith;
 	}
 
+	// Provides a reference to the resource text objects in the UI.
 	public void setGUI(UnityEngine.UI.Text[] resText) {
 		resourceText = new Dictionary<Resource, UnityEngine.UI.Text>();
 		resourceText[Resource.FOOD] = resText[0];
@@ -192,6 +193,10 @@ public class Player
 					routeLen = p.length;
 					closest = building;
 				}
+			}
+			// Edge case: fewer than n buildings exist.
+			if (closest == null) {
+				return;
 			}
 			toggleTrading(closest);
 		}

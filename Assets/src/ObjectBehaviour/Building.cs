@@ -35,7 +35,7 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 	public BuildingType type;
 	private Transform dock;
 
-	private List<UnitType> trains = new List<UnitType>();
+	private List<UnitType> trainableUnitTypes = new List<UnitType>();
 
 	private SpriteRenderer tradeWith;
 	private SpriteRenderer influence;
@@ -60,10 +60,10 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 		transform.FindChild("dockRotation").localEulerAngles = new Vector3(0f,0f,angle);
 		dock = transform.FindChild("dockRotation/dock");
 		
-		trains.Add(UnitType.MERCHANT);
-		trains.Add(UnitType.GALLEY);
-		trains.Add(UnitType.LONGBOAT);
-		trains.Add(UnitType.TRADER);
+		trainableUnitTypes.Add(UnitType.MERCHANT);
+		trainableUnitTypes.Add(UnitType.GALLEY);
+		trainableUnitTypes.Add(UnitType.LONGBOAT);
+		trainableUnitTypes.Add(UnitType.TRADER);
 		
 		amount = 0f;
 		health = maxHealth;
@@ -143,14 +143,10 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 		}
 	}
 
-	public List<UnitType> getTrains() {
-		return trains;
-	}
-
 	// fits the "RadialMenu callback"
-	public void trainUnit(int selected) {
-		if (selected != -1) {
-			UnitType unitType = trains[selected];
+	public void trainUnit(int optionSelected) {
+		if (optionSelected != -1) {
+			UnitType unitType = trainableUnitTypes[optionSelected];
 			var cost = UnitData.getCost(unitType);
 			if (owner.spend(cost)) {
 				Scene.get().spawnUnit(this, unitType);
@@ -196,9 +192,7 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 		}
 	}
 
-	public void handleDrag(int mouseButton, Vector2 offset, Vector2 relativeToClick) {
-
-	}
+	public void handleDrag(int mouseButton, Vector2 offset, Vector2 relativeToClick) {}
 	
 	public void setHover(bool isHovering)
 	{
@@ -212,16 +206,13 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 	public void handleMouseDown(int mouseButton, Vector2 mousePos) {
 		if (type == BuildingType.BASE && owner.isHuman) {
 			List<Sprite> icons = new List<Sprite>();
-			foreach (UnitType uType in getTrains()) {
+			foreach (UnitType uType in trainableUnitTypes) {
 				icons.Add(UnitData.getIcon(uType));
 			}
-			Scene.get().radial.mouseDown(Camera.main.WorldToScreenPoint(transform.position),
-			                             icons, trainUnit);
+			GUIOverlay.get().createRadial(transform.position, icons, trainUnit);
 		}
 	}
 
-	public void handleMouseUp(int mouseButton, Vector2 mousePos) {
-	
-	}
+	public void handleMouseUp(int mouseButton, Vector2 mousePos) {}
 
 }
