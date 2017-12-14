@@ -105,13 +105,14 @@ public class Scene : MonoBehaviour {
 		foreach (Unit unit in units) {
 			unit.nearbyUnits.Clear();
 			unit.nearbyBuildings.Clear();
-			// compare to previous units, not later units)
 			foreach (Unit otherUnit in units) {
+				// Compare to previous units, and stop when the current unit is found
 				if (otherUnit == unit) {
 					break;
 				}
 				float dd = (otherUnit.transform.position - unit.transform.position).sqrMagnitude;
 				unit.nearbyUnits.Add(otherUnit, dd);
+				otherUnit.nearbyUnits.Add(unit, dd);
 			}
 			foreach (Building b in buildings) {
 				float dist = (b.gamePos - unit.transform.position).sqrMagnitude;

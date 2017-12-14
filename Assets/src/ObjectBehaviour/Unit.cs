@@ -27,8 +27,10 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 	private int health;
 	private float hpPercent = 1f;
 
-	private StatusMap statusMap;
+	// Actor properties
+	public StatusMap statusMap { get; set; }
 	private ActionMap actionMap;
+
 	[HideInInspector]
 	public Neighbours<Unit> nearbyUnits;
 	[HideInInspector]
@@ -92,7 +94,7 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 		nearbyBuildings = new Neighbours<Building>();
 		statusMap = new StatusMap(this);
 		actionMap = new ActionMap(this);
-		actionMap.add(0, new Ability(0.1f));
+		actionMap.add(0, new Ability(fireAbility, 0.1f));
 	}
 
 	// Use this for initialization
@@ -148,7 +150,7 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 				}
 				Unit other = otherUnit.obj;
 				if (other.owner != owner) {
-					cast(ATTACK, other);
+					actionMap.use(ATTACK, other);
 					// look at
 					Vector2 offset = other.transform.position - transform.position;
 					targetDir = Mathf.Rad2Deg * Mathf.Atan2(offset.y, offset.x);
@@ -163,7 +165,7 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 				}
 				Building other = building.obj;
 				if (other.owner != owner) {
-					cast(ATTACK, other);
+					actionMap.use(ATTACK, other);
 					// look at
 					Vector2 offset = other.transform.position - transform.position;
 					targetDir = Mathf.Rad2Deg * Mathf.Atan2(offset.y, offset.x);
@@ -288,11 +290,6 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 		}
 	}
 
-	public void cast(int action, object target) {
-		actionMap.use(action, target);
-		statusMap.add(new Status(State.ANIMATION), actionMap.getCastTime(action));
-	}
-
 	public void select() {
 		GetComponent<Renderer>().material.color = new Color(0.7f, 1f, 0.7f);
 		selected = true;
@@ -314,7 +311,8 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 		fireEmitter.emissionRate = 50 * (1f - health/maxHealth);
 	}
 
-	public void fire(Attackable target) {
+	public void fireAbility(AbilityTarget abilityTarget) {
+		Attackable target = abilityTarget.getAttackableTarget();
 		if (target.dead) return;
 		GameObject gun = transform.FindChild("Gun").gameObject;
 		Shot shot = Instantiate(bulletObj).GetComponent<Shot>();
