@@ -59,6 +59,7 @@ public class Scene : MonoBehaviour {
 		newUnit.transform.position = new Vector3(pos.x, pos.y, -1);
 		newUnit.init(building.owner, unitType);
 		foreach (Unit otherUnit in units) {
+			newUnit.nearbyUnits.Add(otherUnit.GetComponent<Steering>());
 			otherUnit.nearbyUnits.Add(newUnit.GetComponent<Steering>());
 		}
 		units.Add(newUnit);
