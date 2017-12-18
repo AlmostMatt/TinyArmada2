@@ -5,11 +5,14 @@ using System.Collections.Generic;
 public class Shot : MonoBehaviour {
 
 	private Attackable target;
-	public Player owner;
+	public Actor attacker;
+	private Seek seekBehaviour = new Seek(Vector2.zero);
 
 	// Use this for initialization
 	public void Start () {
-		GetComponent<Steering>().setSpeed(10f, 60f);
+		Steering steering = GetComponent<Steering>();
+		steering.setSpeed(10f, 60f);
+		steering.addBehaviour(1f, seekBehaviour);
 	}
 	
 	// Update is called once per frame
@@ -30,8 +33,8 @@ public class Shot : MonoBehaviour {
 				hit(target);
 				Destroy(gameObject);
 			}
-			// it looks a bit weird to have an arrow 'lead' a target.
-			GetComponent<Steering>().seek(target.transform.position);
+			// It looks weird to have an arrow 'lead' a target, so I seek
+			seekBehaviour.setTarget(target.transform.position);
 		}
 	}
 
@@ -40,6 +43,6 @@ public class Shot : MonoBehaviour {
 	}
 
 	private void hit(Attackable u) {
-		u.damage(owner, 1);
+		u.damage(attacker, 1);
 	}
 }

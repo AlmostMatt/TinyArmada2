@@ -58,6 +58,9 @@ public class Scene : MonoBehaviour {
 		Vector2 pos = building.getDock();
 		newUnit.transform.position = new Vector3(pos.x, pos.y, -1);
 		newUnit.init(building.owner, unitType);
+		foreach (Unit otherUnit in units) {
+			otherUnit.nearbyUnits.Add(newUnit.GetComponent<Steering>());
+		}
 		units.Add(newUnit);
 		Vector3 offset = (Vector3) building.getDock() - building.gamePos;
 		if (!newUnit.canTrade()) {
@@ -98,25 +101,6 @@ public class Scene : MonoBehaviour {
 		groups.RemoveWhere(grp => grp.isEmpty());
 		foreach (UnitGroup grp in groups) {
 			grp.update();
-		}
-
-		// update neighbours
-		foreach (Unit unit in units) {
-			unit.nearbyUnits.Clear();
-			unit.nearbyBuildings.Clear();
-			foreach (Unit otherUnit in units) {
-				// Compare to previous units, and stop when the current unit is found
-				if (otherUnit == unit) {
-					break;
-				}
-				float dd = (otherUnit.transform.position - unit.transform.position).sqrMagnitude;
-				unit.nearbyUnits.Add(otherUnit, dd);
-				otherUnit.nearbyUnits.Add(unit, dd);
-			}
-			foreach (Building b in buildings) {
-				float dist = (b.gamePos - unit.transform.position).sqrMagnitude;
-				unit.nearbyBuildings.Add(b, dist);
-			}
 		}
 	}
 

@@ -18,27 +18,24 @@ public class Path
         points = new List<Vector2>();
     }
 
-    public void followPath(Unit u) {
+	public void followPath(Steering steering, Seek seekBehaviour, Arrival arrivalBehaviour, Brake brakeBehaviour) {
         Vector2 next = nextPoint();
-        float nextRadius = (points.Count == 1) ? destRadius : u.radius;
-        float dd = (next - (Vector2) u.transform.position).sqrMagnitude;
-		Steering steering = u.GetComponent<Steering>();
-        if (dd < nextRadius * nextRadius) {
-            if (points.Count == 1) {
-				steering.brake();
-                arrived = true;
-            } else {
-                points.RemoveAt(0);
-                // accelerate toward the next node
-                followPath(u);
-            }
-        } else {
-            if (points.Count == 1) {
-				steering.arrival(next);
-            } else {
-				steering.seek(next);
-            }
-        }
+		float nextRadius = (points.Count == 1) ? destRadius : steering.getSize();
+		bool arrivedAtPoint = (next - steering.getPosition()).sqrMagnitude < nextRadius * nextRadius;
+		arrived = arrivedAtPoint && points.Count == 1;
+		if (arrivedAtPoint && points.Count > 1) {
+            points.RemoveAt(0);
+            // accelerate toward the next node
+			followPath(steering, seekBehaviour, arrivalBehaviour, brakeBehaviour);
+		} else {
+			// Stop after arriving.
+			steering.updateWeight(brakeBehaviour, arrived ? 1f : 0f);
+			// Arrival for the last point, seek for every other point
+			arrivalBehaviour.setTarget(next);
+			seekBehaviour.setTarget(next);
+			steering.updateWeight(arrivalBehaviour, points.Count == 1 ? 1f : 0f);
+			steering.updateWeight(seekBehaviour, points.Count > 1 ? 1f : 0f);
+		}
     }
 
     public Vector2 nextPoint() {

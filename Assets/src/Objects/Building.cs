@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public enum BuildingType {BASE=0, COLONY=1};
 
-public class Building : MonoBehaviour, Attackable, Clickable {
+public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition {
 	
 	[HideInInspector]
 	public bool dead {get; set;}
@@ -159,16 +159,24 @@ public class Building : MonoBehaviour, Attackable, Clickable {
 	}
 
 	/* 
+	 * ObjectWithPosition
+	 */
+
+	public Vector2 getPosition() {
+		return transform.position;
+	}
+
+	/* 
 	 * ATTACKABLE 
 	 */
-	public void damage(Player attacker, int amount) {
-		if (attacker == owner) {
+	public void damage(Actor attacker, int amount) {
+		if (attacker.playerNumber == owner.number) {
 			return;
 		}
 		health -= amount;
 		if (health <= 0) {
 			health = maxHealth;
-			setOwner(attacker);
+			setOwner(Scene.get().players[attacker.playerNumber]);
 		}
 		if (health < maxHealth) {
 			fireEmitter.enableEmission = true;

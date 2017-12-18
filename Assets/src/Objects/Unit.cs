@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Unit : MonoBehaviour, Attackable, Actor {
+public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 	//TODO: call getComponent less often
 	private int ATTACK = 0;
 	private float range = 1f;
@@ -13,10 +13,13 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 
 	private bool selected = false;
 
-	// movement
+	// Movement related
     private bool hasDest;
     private Path path;
 	private float destRadius;
+	private Seek seekBehaviour = new Seek(Vector2.zero);
+	private Arrival arrivalBehaviour = new Arrival(Vector2.zero);
+	private Brake brakeBehaviour = new Brake();
 
 	private float targetDir; // if this object is casting an ability in a direction, turn toward this)
 	
@@ -32,14 +35,16 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 	private ActionMap actionMap;
 
 	[HideInInspector]
-	public Neighbours<Unit> nearbyUnits;
+	// TODO: make this <Unit, Unit> and figure out a different way to share it with SteeringBehaviours.
+	public Neighbours<Steering, Steering> nearbyUnits;
 	[HideInInspector]
-	public Neighbours<Building> nearbyBuildings;
+	public Neighbours<Unit, Building> nearbyBuildings;
 	
 	[HideInInspector]
 	public bool dead {get; set;}
 	[HideInInspector]
 	public Player owner;
+	public int playerNumber {get {return owner.number;} }
 	[HideInInspector]
 	public UnitType type;
 
@@ -82,6 +87,7 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 		fireEmitter.enableEmission = false;
 
 		radius = 0.25f;
+		GetComponent<Steering>().setSize(radius);
 		dead = false;
 	}
 
@@ -90,8 +96,8 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 	 */
 
 	void Awake() {
-		nearbyUnits = new Neighbours<Unit>();
-		nearbyBuildings = new Neighbours<Building>();
+		nearbyUnits = new Neighbours<Steering, Steering>(GetComponent<Steering>());
+		nearbyBuildings = new Neighbours<Unit, Building>(this);
 		statusMap = new StatusMap(this);
 		actionMap = new ActionMap(this);
 		actionMap.add(0, new Ability(fireAbility, 0.1f));
@@ -106,31 +112,30 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 		}
 
 		health = maxHealth;
+		Steering steering = GetComponent<Steering>();
+		steering.addBehaviour(0f, seekBehaviour);
+		steering.addBehaviour(0f, arrivalBehaviour);
+		steering.addBehaviour(0f, brakeBehaviour);
+		steering.addBehaviour(0.5f, new Separate(nearbyUnits, 0.7f));
+		steering.addBehaviour(1f, new UnalignedCollisionAvoidance(nearbyUnits));
+		// TODO: wall avoidance
+		// TODO: align with others in the same group
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		//Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
-		//Vector2 offset = ray.origin - transform.position;
-		//float angle = Mathf.Rad2Deg * Mathf.Atan2(offset.y, offset.x);
-		//float angle = Vector2.Angle(Vector2.right, );
-		//transform.localEulerAngles = new Vector3(0, 0, angle);
+		// Updates HP indicators over time
 		if (hpPercent * maxHealth > health) {
 			hpPercent -= 0.4f * Time.deltaTime;
 		}
 	}
 
 	public void FixedUpdate () {
+		nearbyUnits.Update();
+		nearbyBuildings.Update();
+
 		Steering steering = GetComponent<Steering>();
 		float maxSpeed = steering.getMaxSpeed();
-		if (!canMove()) {
-			steering.brake();
-		}
-		// containment (walls)
-		// avoid (obstacles)
-		// separate from 'too close' others
-		steering.separate(nearbyUnits);
-		// align with others in the same group
 		// move to destination (queue if necessary)
 		if (group != null) {
 			if (!hasDest || (path.goal - group.getDest()).sqrMagnitude > group.radius * group.radius) {
@@ -138,21 +143,26 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 			}
 		}
 		if (hasDest && canMove ()) {
-            path.followPath(this);
+			path.followPath(steering, seekBehaviour, arrivalBehaviour, brakeBehaviour);
+		} else {
+			steering.updateWeight(seekBehaviour, 0f);
+			steering.updateWeight(arrivalBehaviour, 0f);
+			steering.updateWeight(brakeBehaviour, 2f);
 		}
+
 		statusMap.update(Time.fixedDeltaTime);
 		actionMap.update(Time.fixedDeltaTime);
 		float maxdd = range * range;
 		if (canAttack()) {
-			foreach (Neighbour<Unit> otherUnit in nearbyUnits) {
-				if (otherUnit.dd > maxdd ) {
+			foreach (Neighbour<Steering> otherUnitNeighbour in nearbyUnits) {
+				Unit otherUnit = otherUnitNeighbour.obj.GetComponent<Unit>();
+				if (otherUnitNeighbour.dd > maxdd ) {
 					break;
 				}
-				Unit other = otherUnit.obj;
-				if (other.owner != owner) {
-					actionMap.use(ATTACK, other);
+				if (otherUnit.owner != owner) {
+					actionMap.use(ATTACK, otherUnit);
 					// look at
-					Vector2 offset = other.transform.position - transform.position;
+					Vector2 offset = otherUnit.transform.position - transform.position;
 					targetDir = Mathf.Rad2Deg * Mathf.Atan2(offset.y, offset.x);
 					break;
 				}
@@ -300,7 +310,7 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 		selected = false;
 	}
 
-	public void damage(Player attacker, int amount) {
+	public void damage(Actor attacker, int amount) {
 		health = Mathf.Max (0, health - amount);
 		if (health == 0) {
 			setTradeDest(null);
@@ -316,7 +326,7 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 		if (target.dead) return;
 		GameObject gun = transform.FindChild("Gun").gameObject;
 		Shot shot = Instantiate(bulletObj).GetComponent<Shot>();
-		shot.owner = owner;
+		shot.attacker = this;
 		float r = 0.25f;
 		shot.transform.position = gun.transform.position + new Vector3(Random.Range(-r, r), Random.Range(-r,r),0);
 		Vector2 offset = target.transform.position - gun.transform.position;
@@ -363,5 +373,13 @@ public class Unit : MonoBehaviour, Attackable, Actor {
 			owner.headingTo(this, building);
 		}
 		tradeDest = building;
+	}
+
+	/* 
+	 * ObjectWithPosition
+	 */
+
+	public Vector2 getPosition() {
+		return transform.position;
 	}
 }
