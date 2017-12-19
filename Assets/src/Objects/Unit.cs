@@ -319,7 +319,7 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 		}
 		fireEmitter.enableEmission = true;
 		fireEmitter.startSize = 1.5f * (1f - health/maxHealth);
-		fireEmitter.emissionRate = 50 * (1f - health/maxHealth);
+		fireEmitter.emissionRate = 50f * (1f - health/maxHealth);
 	}
 
 	public void fireAbility(AbilityTarget abilityTarget) {
