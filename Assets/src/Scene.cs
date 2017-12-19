@@ -73,6 +73,16 @@ public class Scene : MonoBehaviour {
 		}
 	}
 
+	private void removeUnit(Unit unit, int unitIndex) {
+		unit.setGroup(null);
+		hover.Remove(unit);
+		units.RemoveAt(unitIndex);
+		foreach (Unit otherUnit in units) {
+			otherUnit.nearbyUnits.Remove(unit.GetComponent<Steering>());
+		}
+		Destroy(unit.gameObject);
+	}
+
 	// Update is called once per frame
 	void Update () {
 		foreach (Player p in players) {
@@ -81,12 +91,9 @@ public class Scene : MonoBehaviour {
 
 		// dead units
 		for (int i = units.Count - 1; i >= 0; --i) {
-			Unit u = units[i];
-			if (u.dead) {
-				u.setGroup(null);
-				hover.Remove(u);
-				units.RemoveAt(i);
-				Destroy(u.gameObject);
+			Unit unit = units[i];
+			if (unit.dead) {
+				removeUnit(unit, i);
 			}
 		}
 

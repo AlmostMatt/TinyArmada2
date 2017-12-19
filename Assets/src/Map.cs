@@ -7,6 +7,7 @@ public class Map : MonoBehaviour {
 	public GameObject buildingObject;
 	public GameObject baseObject;
     public GameObject treeObject;
+	public GameObject islandObject;
 
     // grid size
 	private int w = 30;
@@ -20,14 +21,6 @@ public class Map : MonoBehaviour {
 	private float tUnit = 0.25f; // 4x4
 	private Vector2 tStone = new Vector2(0,0);
 	private Vector2 tGrass = new Vector2(0,1);
-
-	// mesh
-	private Mesh mesh;
-	private List<Vector3> newVerts = new List<Vector3>();
-	private List<int> newTris = new List<int>();
-	private List<Vector2> newUV = new List<Vector2>();
-
-    private int squareCount = 0;
 
 	// Use this for initialization
 	void Start () {
@@ -100,11 +93,15 @@ public class Map : MonoBehaviour {
             for (int n = 0; n < numland && adjacentWater.Count > 0; n++) {
                 Vector2 randTile = adjacentWater.popRandom();
                 setTile(randTile, Tile.GRASS);
+				GameObject island = Instantiate(islandObject);
+				island.transform.parent = transform;
+				island.transform.localPosition = mapToGame(randTile);
                 for (int tr=0; tr<treeDensity; ++tr) {
                     GameObject tree = Instantiate(treeObject);
                     tree.transform.parent = transform;
+					// z = -0.2f puts the tree in front of the sand
                     tree.transform.localPosition = mapToGame(randTile) + new Vector3(Random.Range(-tileSize*0.45f, tileSize*0.45f),
-                                                                                Random.Range(-tileSize*0.45f, tileSize*0.45f), 0);
+                                                                                Random.Range(-tileSize*0.45f, tileSize*0.45f), -0.2f);
                     float sz = Random.Range(tileSize * 0.8f, tileSize * 1.2f); // tree radius is about 0.29 by default
                     tree.transform.localScale = new Vector3(sz, sz, 1f);
                 }
@@ -180,8 +177,6 @@ public class Map : MonoBehaviour {
 			building.setOwner(players[0]);
 			buildings.Add(building);
      	}
-        // spin docks
-		generateMesh();
         Pathing.updateMap(this);
 	}
 
@@ -201,49 +196,6 @@ public class Map : MonoBehaviour {
         }
     }
 
-	private void generateMesh() {
-        mesh = GetComponent<MeshFilter>().mesh;
-        for (int x=0; x<w; ++x) {
-            for (int y=0; y<h; ++y) {
-                Vector3 pos = mapToGame(x,y);
-                genSquare(pos.x, pos.y, textureCoord(getTile (x,y)));
-            }
-        }
-
-        mesh.Clear();
-        mesh.vertices = newVerts.ToArray();
-        mesh.triangles = newTris.ToArray();
-        mesh.uv = newUV.ToArray();
-        ;
-        mesh.RecalculateNormals();
-
-        // cleanup for next time
-        squareCount = 0;
-        newVerts.Clear();
-        newTris.Clear();
-        newUV.Clear();
-    }
-
-    private void genSquare(float x, float y, Vector2 texture) {
-        newVerts.Add(new Vector3(x-tileSize/2, y+tileSize/2, 0));
-        newVerts.Add(new Vector3(x+tileSize/2, y+tileSize/2, 0));
-        newVerts.Add(new Vector3(x+tileSize/2, y-tileSize/2, 0));
-        newVerts.Add(new Vector3(x-tileSize/2, y-tileSize/2, 0));
-        
-        newTris.Add(squareCount*4);
-        newTris.Add(squareCount*4 + 1);
-        newTris.Add(squareCount*4 + 3);
-        newTris.Add(squareCount*4 + 1);
-        newTris.Add(squareCount*4 + 2);
-        newTris.Add(squareCount*4 + 3);
-        
-        newUV.Add(new Vector2(tUnit * texture.x, tUnit * texture.y + tUnit));
-        newUV.Add(new Vector2(tUnit * texture.x + tUnit, tUnit * texture.y + tUnit));
-        newUV.Add(new Vector2(tUnit * texture.x + tUnit, tUnit * texture.y));
-        newUV.Add(new Vector2(tUnit * texture.x, tUnit * texture.y));
-        squareCount++;
-    }
-    
     public Vector3 mapToGame(int x, int y) {
         return mapToGame(new Vector2(x,y));
     }

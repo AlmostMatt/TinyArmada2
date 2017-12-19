@@ -38,7 +38,7 @@ public class InputWrapper : MonoBehaviour {
 					Vector2 delta = (worldMousePosition - prevWorldMousePosition);
 					clickObject.handleDrag(0, delta, worldMousePosition - clickWorldPosition);
 				} else {
-					mainCamera.Translate(clickWorldPosition - worldMousePosition);
+					mainCamera.Translate(clickWorldPosition - worldMousePosition, Space.World);
 				}
 			}
 		}
