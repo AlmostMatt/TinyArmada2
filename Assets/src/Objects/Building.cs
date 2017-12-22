@@ -58,7 +58,7 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 		Vector2 dockSide = rs.popRandom() - tileCoordinate;
 		float angle = Mathf.Rad2Deg * Mathf.Atan2(dockSide.y, dockSide.x);
 		transform.FindChild("dockRotation").localEulerAngles = new Vector3(0f,0f,angle);
-		dock = transform.FindChild("dockRotation/dock");
+		dock = transform.FindChild("dockRotation/dotted square");
 		
 		trainableUnitTypes.Add(UnitType.MERCHANT);
 		trainableUnitTypes.Add(UnitType.GALLEY);
@@ -128,10 +128,11 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 		}
 		owner = p;
 		p.buildings.Add(this);
-		Transform teamColor = transform.FindChild("team-color");
-		if (teamColor != null) {
-			teamColor.GetComponent<SpriteRenderer>().color = owner.color;
-		}
+		// TODO: add teamcolor component
+		//Transform teamColor = transform.FindChild("team-color");
+		//if (teamColor != null) {
+		//	teamColor.GetComponent<SpriteRenderer>().color = owner.color;
+		//}
 		float influenceAlpha = p.isNeutral ? 0.15f : 0.25f;
 		influence.color = new Color(p.color.r, p.color.g, p.color.b, influenceAlpha);
 	}
