@@ -8,8 +8,7 @@ public enum UnitType {MERCHANT=0, GALLEY=1, LONGBOAT=2, TRADER=3};
 public class UnitData : MonoBehaviour {
 	
 	public Sprite[] icons;
-	public Sprite[] images;
-	public Sprite[] teamImages;
+	public GameObject[] unitModels;
 
 	private static UnitData singleton;
 	// Use this for initialization
@@ -74,11 +73,7 @@ public class UnitData : MonoBehaviour {
 		return singleton.icons[(int) uType];
 	}
 	
-	public static Sprite getImage(UnitType uType) {
-		return singleton.images[(int) uType];
-	}
-	
-	public static Sprite getTeamImage(UnitType uType) {
-		return singleton.teamImages[(int) uType];
+	public static GameObject getModel(UnitType uType) {
+		return singleton.unitModels[(int) uType];
 	}
 }

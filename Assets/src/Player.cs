@@ -173,7 +173,7 @@ public class Player
 		if (!isNeutral) {
 			if (has (UnitData.getCost(UnitType.TRADER))) {
 				//TODO: change trainunit to take unit type argument
-				getBase().trainUnit(3); // UnitType.MERCHANT);
+				getBase().trainUnit((int) UnitType.MERCHANT);
 			}
 		}
 		tradeWithNClosest(Mathf.Min(8, 1 + units.Count));

@@ -1,17 +1,17 @@
 fileFormatVersion: 2
-guid: 1a708fb0e86cacf4d9b322ce1efa3c84
-timeCreated: 1513925802
+guid: 1fadc38dac2a7df4cb6368d7dfbf4999
+timeCreated: 1513930950
 licenseType: Free
 ModelImporter:
   serializedVersion: 19
   fileIDToRecycleName:
-    100000: boat1
+    100000: gold
     100002: //RootNode
-    400000: boat1
+    400000: gold
     400002: //RootNode
-    2300000: boat1
-    3300000: boat1
-    4300000: boat1
+    2300000: gold
+    3300000: gold
+    4300000: gold
   materials:
     importMaterials: 1
     materialName: 0

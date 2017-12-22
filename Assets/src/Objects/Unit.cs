@@ -9,7 +9,7 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 
 	public Sprite[] sprites;
 	public float radius {get; set;}
-	public GameObject bulletObj;
+	public GameObject bulletObj; // The prefab to spawn
 
 	private bool selected = false;
 
@@ -58,13 +58,14 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 	[HideInInspector]
 	public Building tradeDest;
 
-	private SpriteRenderer teamColor;
+	private GameObject resourceObject; // the child object of type resource
 	private ParticleSystem fireEmitter;
 	
 	public void init(Player p, UnitType unitType) {
 		setOwner(p);
 		type = unitType;
-		transform.FindChild("resource").GetComponent<Renderer>().enabled = false;
+		resourceObject = transform.FindChild("resource").gameObject;
+		resourceObject.SetActive(false);
 		switch (type) {
 		case UnitType.MERCHANT:
 		case UnitType.TRADER:
@@ -76,12 +77,12 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 			range = 3f;
 			break;
 		}
-		GetComponent<SpriteRenderer>().sprite = UnitData.getImage(type);
-		teamColor = transform.FindChild("team-color").GetComponent<SpriteRenderer>();
-		teamColor.sprite = UnitData.getTeamImage(type);
-		if (owner != null) {
-			teamColor.color = owner.color;
-		}
+		GameObject unitModel = Instantiate(UnitData.getModel(type));
+		unitModel.transform.parent = transform;
+		float modelScale = 0.01f;
+		unitModel.transform.localScale = new Vector3(modelScale,modelScale,modelScale);
+		unitModel.transform.localPosition = new Vector3();
+		unitModel.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
 		GetComponent<LineRenderer>().enabled = false;
 		fireEmitter = transform.FindChild("Fire").GetComponent<ParticleSystem>();
 		fireEmitter.enableEmission = false;
@@ -195,14 +196,14 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 					resource = tradeDest.resource;
 					carrying = tradeDest.collect(capacity);
 					followPath(owner.getReturnRoute(tradeDest));
-					transform.FindChild("resource").GetComponent<Renderer>().enabled = true;
+					resourceObject.SetActive(true);
 					float sz = 0.25f + 0.75f * carrying / capacity;
-					transform.FindChild("resource").localScale = new Vector3(sz,sz,1f);
+					resourceObject.transform.localScale = new Vector3(sz,sz,sz);
 				} else if (path.goal == dropoff) {
 					// drop off
 					owner.collect(resource, carrying);
 					carrying = 0f;
-					transform.FindChild("resource").GetComponent<Renderer>().enabled = false;
+					resourceObject.SetActive(false);
 					float maxProfit = -1f;
 					foreach (Building building in owner.tradeWith) {
 						Path tradeRoute = owner.getTradeRoute(building);
@@ -361,9 +362,9 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 	public void setOwner(Player p) {
 		owner = p;
 		p.units.Add(this);
-		if (teamColor != null) {
-			teamColor.color = owner.color;
-		}
+		// TODO: add a colored component
+		// teamColor = transform.FindChild("team-color").GetComponent<SpriteRenderer>();
+		// teamColor.color = p.color;
 	}
 
 	public void setTradeDest(Building building) {

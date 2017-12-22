@@ -47,7 +47,7 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 		tilePos = tileCoordinate;
 		Map map = Scene.get().map;
 		gamePos = map.mapToGame(tileCoordinate);
-		transform.position = gamePos;
+		transform.position = new Vector3(gamePos.x, gamePos.y, -0.4f);
 		
 		RandomSet<Vector2> rs = new RandomSet<Vector2>();
 		foreach (Vector2 nbor in map.getNeighbours4(tileCoordinate)) {

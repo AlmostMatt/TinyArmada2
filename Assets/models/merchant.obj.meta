@@ -1,17 +1,17 @@
 fileFormatVersion: 2
-guid: 1a708fb0e86cacf4d9b322ce1efa3c84
-timeCreated: 1513925802
+guid: 93f5a672060f85e43924c4929a53ecdc
+timeCreated: 1513925732
 licenseType: Free
 ModelImporter:
   serializedVersion: 19
   fileIDToRecycleName:
-    100000: boat1
+    100000: merchant
     100002: //RootNode
-    400000: boat1
+    400000: merchant
     400002: //RootNode
-    2300000: boat1
-    3300000: boat1
-    4300000: boat1
+    2300000: merchant
+    3300000: merchant
+    4300000: merchant
   materials:
     importMaterials: 1
     materialName: 0

@@ -1,17 +1,17 @@
 fileFormatVersion: 2
-guid: 1a708fb0e86cacf4d9b322ce1efa3c84
-timeCreated: 1513925802
+guid: 8185df4e1fd07f144865258507b78a35
+timeCreated: 1513926169
 licenseType: Free
 ModelImporter:
   serializedVersion: 19
   fileIDToRecycleName:
-    100000: boat1
+    100000: galley
     100002: //RootNode
-    400000: boat1
+    400000: galley
     400002: //RootNode
-    2300000: boat1
-    3300000: boat1
-    4300000: boat1
+    2300000: galley
+    3300000: galley
+    4300000: galley
   materials:
     importMaterials: 1
     materialName: 0

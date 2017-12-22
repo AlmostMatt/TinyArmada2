@@ -56,7 +56,7 @@ public class Scene : MonoBehaviour {
         // units should be in front of buildings
 		Unit newUnit = Instantiate(unitObject).GetComponent<Unit>();
 		Vector2 pos = building.getDock();
-		newUnit.transform.position = new Vector3(pos.x, pos.y, -1);
+		newUnit.transform.position = new Vector3(pos.x, pos.y, 0f);
 		newUnit.init(building.owner, unitType);
 		foreach (Unit otherUnit in units) {
 			newUnit.nearbyUnits.Add(otherUnit.GetComponent<Steering>());
