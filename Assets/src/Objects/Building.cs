@@ -47,7 +47,7 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 		tilePos = tileCoordinate;
 		Map map = Scene.get().map;
 		gamePos = map.mapToGame(tileCoordinate);
-		transform.position = new Vector3(gamePos.x, gamePos.y, -0.4f);
+		transform.position = new Vector3(gamePos.x, gamePos.y, -0.1f);
 		
 		RandomSet<Vector2> rs = new RandomSet<Vector2>();
 		foreach (Vector2 nbor in map.getNeighbours4(tileCoordinate)) {
@@ -128,11 +128,8 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 		}
 		owner = p;
 		p.buildings.Add(this);
-		// TODO: add teamcolor component
-		//Transform teamColor = transform.FindChild("team-color");
-		//if (teamColor != null) {
-		//	teamColor.GetComponent<SpriteRenderer>().color = owner.color;
-		//}
+		transform.FindChild("teamColoredBuilding").GetComponent<Renderer>().material.SetColor("_TeamColor", owner.color);
+		// The influence of a building is a circle around it in which friendly boats are healed.
 		float influenceAlpha = p.isNeutral ? 0.15f : 0.25f;
 		influence.color = new Color(p.color.r, p.color.g, p.color.b, influenceAlpha);
 	}

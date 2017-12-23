@@ -96,15 +96,6 @@ public class Map : MonoBehaviour {
 				GameObject island = Instantiate(islandObject);
 				island.transform.parent = transform;
 				island.transform.localPosition = mapToGame(randTile);
-                for (int tr=0; tr<treeDensity; ++tr) {
-                    GameObject tree = Instantiate(treeObject);
-                    tree.transform.parent = transform;
-					// z = -0.2f puts the tree in front of the sand
-                    tree.transform.localPosition = mapToGame(randTile) + new Vector3(Random.Range(-tileSize*0.45f, tileSize*0.45f),
-                                                                                Random.Range(-tileSize*0.45f, tileSize*0.45f), -0.2f);
-                    float sz = Random.Range(tileSize * 0.8f, tileSize * 1.2f); // tree radius is about 0.29 by default
-                    tree.transform.localScale = new Vector3(sz, sz, 1f);
-                }
                 foreach (Vector2 adj in getNeighbours4(randTile)) {
 					if (isWater(getTile(adj))) {
 						// exclude the outer border
@@ -178,6 +169,23 @@ public class Map : MonoBehaviour {
 			buildings.Add(building);
      	}
         Pathing.updateMap(this);
+
+		// Spawn trees.
+		for (int x = 0; x < w; ++x) {
+			for (int y = 0; y < h; ++y) {
+				if (tileMap[x][y] == Tile.GRASS) {
+					for (int tr=0; tr<treeDensity; ++tr) {
+						GameObject tree = Instantiate(treeObject);
+						tree.transform.parent = transform;
+						// z = -0.2f puts the tree in front of the sand
+						tree.transform.localPosition = mapToGame(x,y) + new Vector3(Random.Range(-tileSize*0.45f, tileSize*0.45f),
+							Random.Range(-tileSize*0.45f, tileSize*0.45f), -0.2f);
+						float sz = Random.Range(tileSize * 0.8f, tileSize * 1.2f); // tree radius is about 0.29 by default
+						tree.transform.localScale = new Vector3(sz, sz, 1f);
+					}
+				}
+			}
+		}
 	}
 
     private Vector2 textureCoord(Tile tile) {

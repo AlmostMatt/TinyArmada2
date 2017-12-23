@@ -58,11 +58,11 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 	[HideInInspector]
 	public Building tradeDest;
 
+	private GameObject unitModel;
 	private GameObject resourceObject; // the child object of type resource
 	private ParticleSystem fireEmitter;
 	
 	public void init(Player p, UnitType unitType) {
-		setOwner(p);
 		type = unitType;
 		resourceObject = transform.FindChild("resource").gameObject;
 		resourceObject.SetActive(false);
@@ -77,12 +77,12 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 			range = 3f;
 			break;
 		}
-		GameObject unitModel = Instantiate(UnitData.getModel(type));
+		unitModel = Instantiate(UnitData.getModel(type));
 		unitModel.transform.parent = transform;
-		float modelScale = 0.01f;
-		unitModel.transform.localScale = new Vector3(modelScale,modelScale,modelScale);
+		//float modelScale = 0.01f;
+		//unitModel.transform.localScale = new Vector3(modelScale,modelScale,modelScale);
+		//unitModel.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
 		unitModel.transform.localPosition = new Vector3();
-		unitModel.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
 		GetComponent<LineRenderer>().enabled = false;
 		fireEmitter = transform.FindChild("Fire").GetComponent<ParticleSystem>();
 		fireEmitter.enableEmission = false;
@@ -90,6 +90,7 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 		radius = 0.25f;
 		GetComponent<Steering>().setSize(radius);
 		dead = false;
+		setOwner(p);
 	}
 
 	/*
@@ -362,9 +363,8 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 	public void setOwner(Player p) {
 		owner = p;
 		p.units.Add(this);
-		// TODO: add a colored component
-		// teamColor = transform.FindChild("team-color").GetComponent<SpriteRenderer>();
-		// teamColor.color = p.color;
+		// Sets the team color to be used by the TeamColorAlphaMask shader
+		unitModel.GetComponent<Renderer>().material.SetColor("_TeamColor", p.color);
 	}
 
 	public void setTradeDest(Building building) {
