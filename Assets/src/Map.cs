@@ -178,8 +178,10 @@ public class Map : MonoBehaviour {
 						GameObject tree = Instantiate(treeObject);
 						tree.transform.parent = transform;
 						// z = -0.2f puts the tree in front of the sand
-						tree.transform.localPosition = mapToGame(x,y) + new Vector3(Random.Range(-tileSize*0.45f, tileSize*0.45f),
-							Random.Range(-tileSize*0.45f, tileSize*0.45f), -0.2f);
+						tree.transform.localPosition = mapToGame(x,y) + new Vector3(
+							Random.Range(-tileSize*0.45f, tileSize*0.45f),
+							Random.Range(-tileSize*0.45f, tileSize*0.45f),
+							-0.45f);
 						float sz = Random.Range(tileSize * 0.8f, tileSize * 1.2f); // tree radius is about 0.29 by default
 						tree.transform.localScale = new Vector3(sz, sz, 1f);
 					}
@@ -237,7 +239,7 @@ public class Map : MonoBehaviour {
 		if (x >= 0 && x < tileMap.Count && y >= 0 && y < tileMap[x].Count) {
 			return tileMap[x][y];
 		} else {
-			return Tile.GRASS; // ideally this doesn't come up much. neighbours don't handle it either.
+			return Tile.WATER;
 		}
 	}
     

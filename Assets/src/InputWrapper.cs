@@ -57,8 +57,8 @@ public class InputWrapper : MonoBehaviour {
 	private Vector3 getWorldMousePos() {
 		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 		// Take the intersection of the ray and the z=desiredZ plane
-		float desiredZ = 0f;
-		return ray.origin + (desiredZ - ray.origin.z / ray.direction.z) * ray.direction;
+		float desiredZ = -0.2f;
+		return ray.origin + ((desiredZ - ray.origin.z) / ray.direction.z) * ray.direction;
 	}
 
 	private Clickable getWorldObject(Vector2 worldMousePosition) {

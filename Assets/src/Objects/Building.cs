@@ -189,6 +189,7 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 	 * CLICKABLE 
 	 */
 	public bool clickTest(int mouseButton, Vector2 worldMousePos) {
+		// TODO: check a circle that is facing the camera, and at a custom world-z.
 		return clickArea.Contains(worldMousePos - (Vector2) transform.position);
 	}
 
