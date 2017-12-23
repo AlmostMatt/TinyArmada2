@@ -47,7 +47,7 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 		tilePos = tileCoordinate;
 		Map map = Scene.get().map;
 		gamePos = map.mapToGame(tileCoordinate);
-		transform.position = new Vector3(gamePos.x, gamePos.y, -0.1f);
+		transform.position = new Vector3(gamePos.x, gamePos.y, 0f);
 		
 		RandomSet<Vector2> rs = new RandomSet<Vector2>();
 		foreach (Vector2 nbor in map.getNeighbours4(tileCoordinate)) {
@@ -188,8 +188,8 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 	/* 
 	 * CLICKABLE 
 	 */
-	public bool clickTest(int mouseButton, Vector2 mousePos) {
-		return clickArea.Contains(mousePos - (Vector2) transform.position);
+	public bool clickTest(int mouseButton, Vector2 worldMousePos) {
+		return clickArea.Contains(worldMousePos - (Vector2) transform.position);
 	}
 
 	public void handleClick(int mouseButton) {
