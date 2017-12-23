@@ -62,6 +62,7 @@ public class Scene : MonoBehaviour {
 			newUnit.nearbyUnits.Add(otherUnit.GetComponent<Steering>());
 			otherUnit.nearbyUnits.Add(newUnit.GetComponent<Steering>());
 		}
+		newUnit.nearbyBuildings.AddRange(buildings);
 		units.Add(newUnit);
 		Vector3 offset = (Vector3) building.getDock() - building.gamePos;
 		if (!newUnit.canTrade()) {
