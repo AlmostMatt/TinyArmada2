@@ -92,40 +92,16 @@ public class Pathing
         // generate something like a navmesh if desired
     }
 
-    // grid coordinates, uses bresenham
-    public static bool raycast(Vector2 t1, Vector2 t2) {
-        if (t1.x > t2.x) {
-            return raycast (t2, t1);
-        }
-        int x1 = (int) t1.x, x2 = (int) t2.x;
-        int y1 = (int) t1.y, y2 = (int) t2.y;
-        int y;
-        if (x1 == x2) {
-            for (y = Mathf.Min (y1, y2); y<=Mathf.Max (y1,y2);++y) {
-                if (!map.isWalkable(map.getTile(x1,y))) {
-                    return false;
-                }
-            }
+	// Returns whether or not there is a wall between t1 and t2.
+	public static bool raycast(Vector2 t1, Vector2 t2, int layerMask = Physics2D.DefaultRaycastLayers) {
+		t1 = map.mapToGame(t1);
+		t2 = map.mapToGame(t2);
+		Debug.DrawLine((Vector3) t1, (Vector3) t2, Color.magenta, 0f, false);
+		RaycastHit2D hitInfo = Physics2D.Raycast(t1, t2-t1, (t2-t1).magnitude, layerMask);
+		if (hitInfo.collider != null) {
 			return true;
-        }
-        float dx = x2-x1, dy=y2-y1;
-        float yoffset = 0f;
-        float deltaoffset = Mathf.Abs (dy / dx);
-        y = y1;
-        for (int x = x1; x <= x2; ++x) {
-			if (!map.isWalkable(map.getTile(x,y))) {
-                return false;
-            }
-            yoffset += deltaoffset;
-			while (yoffset >= 0.5f) {
-				if (!map.isWalkable(map.getTile(x,y))) {
-                    return false;
-                }
-                y += (int) Mathf.Sign(y2 - y1);
-				yoffset -= 1f;
-			}
-        }
-        return true;
+		}
+		return false;
     }
 
     private static PathNode getNode(Dictionary<Vector2, PathNode> nodeMap, Vector2 tile, HashSet<Vector2> goal) {
@@ -230,7 +206,7 @@ public class Pathing
 			int i2 = path.Count - 1;
 			while (i1 < i2) {
 				int i = (i1 + i2 + 1)/2;
-				bool canSkip = raycast(current, path[i]);
+				bool canSkip = !raycast(current, path[i], LayerMask.GetMask("Walls"));
 				if (canSkip) {
 					i1 = i;
 				} else {
@@ -267,7 +243,7 @@ public class Pathing
 				foundDest = true;
                 break;
             }
-            foreach (Vector2 ntile in map.getNeighbours8(node.tile)) {   
+            foreach (Vector2 ntile in map.getNeighbours4(node.tile)) {   
                 if (!map.isWalkable(map.getTile(ntile)) || closed.Contains(ntile)) {
                     continue;
                 }

@@ -53,6 +53,7 @@ public class Scene : MonoBehaviour {
 	}
 
 	public void spawnUnit(Building building, UnitType unitType) {
+		Player.humanHasMoved = true;
         // units should be in front of buildings
 		Unit newUnit = Instantiate(unitObject).GetComponent<Unit>();
 		Vector2 pos = building.getDock();

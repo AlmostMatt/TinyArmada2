@@ -123,49 +123,55 @@ public class Map : MonoBehaviour {
 			setTile (t, Tile.WATER);
 		}
 
-		// find coastal tiles (and only ocean reachable tiles at that)
+		// Floodfill water tiles. For each tile, count the number of adjacent land tiles.
+		// Any water tile with 1-2 adjacent land tiles is a valid place for a dock.
+		// The set of land tiles adjacent to validDockTiles is the set of validBuildingTiles.
 		HashSet<Vector2> seen = new HashSet<Vector2>();
 		Queue<Vector2> todo = new Queue<Vector2>();
-		RandomSet<Vector2> coastal = new RandomSet<Vector2>(rnd);
+		HashSet<Vector2> validDockTiles = new HashSet<Vector2>();
+		RandomSet<Vector2> validBuildingTiles = new RandomSet<Vector2>(rnd);
 		// since I excluded the outer border, it is definitely water
 		todo.Enqueue(new Vector2(0,0));
 		seen.Add(todo.Peek());
 		while (todo.Count > 0) {
 			Vector2 randTile = todo.Dequeue();
+			HashSet<Vector2> adjacentCoasts = new HashSet<Vector2>();
 			foreach (Vector2 adj in getNeighbours4(randTile)) {
-				if (seen.Contains(adj)) {
-					continue;
-				} else if (isWater(getTile(adj))) {
-					todo.Enqueue(adj);
+				if (isWater(getTile(adj))) {
+					if (!seen.Contains(adj)) {
+						todo.Enqueue(adj);
+					}
 				} else {
-					coastal.Add(adj);
+					adjacentCoasts.Add(adj);
 				}
 				seen.Add(adj);
+			}
+			if (adjacentCoasts.Count > 0 && adjacentCoasts.Count < 3) {
+				validDockTiles.Add(randTile);
+				validBuildingTiles.AddRange(adjacentCoasts);
 			}
 		}
 
 		// players and bases
 		foreach (Player p in players) {
-			if (p.isNeutral || coastal.Count == 0) continue;
-			Vector2 pos = coastal.popRandom(); // new Vector2(Random.Range(3, w-3), Random.Range(3, h-3));
-			setTile(pos, Tile.BUILDING);
+			if (p.isNeutral || validBuildingTiles.Count == 0) continue;
+			Vector2 buildingPos = validBuildingTiles.popRandom();
+			Vector2 dockTile = getRandomValidNeighbour4(buildingPos, validDockTiles);
+			setTile(buildingPos, Tile.BUILDING);
 			Building building = Instantiate(baseObject).GetComponent<Building>();
-			building.init(pos, BuildingType.BASE);
+			building.init(buildingPos, dockTile, BuildingType.BASE);
 			building.setOwner(p);
 			buildings.Add(building);
 		}
 
 		// colonies
-		for (i = 0; i<numcolonies && coastal.Count > 0; i++) {
-			Vector2 pos = coastal.popRandom();// = new Vector2(Random.Range(0, w), Random.Range(0, h));
-            //if (!isBuildable(getTile(pos))) {
-            //    i--;
-            //    continue;
-            //}
-			setTile(pos, Tile.BUILDING);
+		for (i = 0; i < numcolonies && validBuildingTiles.Count > 0; i++) {
+			Vector2 buildingPos = validBuildingTiles.popRandom();
+			Vector2 dockTile = getRandomValidNeighbour4(buildingPos, validDockTiles);
+			setTile(buildingPos, Tile.BUILDING);
 			Building building = Instantiate(buildingObject).GetComponent<Building>();
-			building.init(pos, BuildingType.COLONY);
-			building.setOwner(players[0]);
+			building.init(buildingPos, dockTile, BuildingType.COLONY);
+			building.setOwner(players[0]); // Neutral
 			buildings.Add(building);
      	}
         Pathing.updateMap(this);
@@ -264,6 +270,13 @@ public class Map : MonoBehaviour {
         // consider buildings water for now since they are where boats spawn
         return isWater(tile);
     }
+
+	public Vector2 getRandomValidNeighbour4(Vector2 currentTile, ICollection<Vector2> validTiles) {
+		RandomSet<Vector2> potentialNeighbours = new RandomSet<Vector2>();
+		potentialNeighbours.AddRange(getNeighbours4(currentTile));
+		potentialNeighbours.Intersect(validTiles);
+		return potentialNeighbours.popRandom();
+	}
     
     public HashSet<Vector2> getNeighbours4(int x, int y) {
         return getNeighbours4(new Vector2(x,y));

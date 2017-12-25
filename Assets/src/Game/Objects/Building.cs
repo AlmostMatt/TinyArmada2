@@ -42,20 +42,14 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 
 	private ParticleSystem fireEmitter;
 
-	public void init(Vector2 tileCoordinate, BuildingType buildingType) {
+	public void init(Vector2 tileCoordinate, Vector2 dockTileCoordinate, BuildingType buildingType) {
 		type = buildingType;
 		tilePos = tileCoordinate;
 		Map map = Scene.get().map;
 		gamePos = map.mapToGame(tileCoordinate);
 		transform.position = new Vector3(gamePos.x, gamePos.y, 0f);
 		
-		RandomSet<Vector2> rs = new RandomSet<Vector2>();
-		foreach (Vector2 nbor in map.getNeighbours4(tileCoordinate)) {
-			if (map.isWalkable(map.getTile(nbor))) {
-				rs.Add(nbor);
-			}
-		}
-		Vector2 dockSide = rs.popRandom() - tileCoordinate;
+		Vector2 dockSide = dockTileCoordinate - tileCoordinate;
 		float angle = Mathf.Rad2Deg * Mathf.Atan2(dockSide.y, dockSide.x);
 		transform.FindChild("dockRotation").localEulerAngles = new Vector3(0f,0f,angle);
 		dock = transform.FindChild("dockRotation/dotted square");

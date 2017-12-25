@@ -22,6 +22,7 @@ public class Player
 	public List<Building> buildings = new List<Building>(); // buildings add themselves
 	public List<UnitGroup> unitgroups = new List<UnitGroup>(); // groups add themselves
 
+	public static bool humanHasMoved = false;
 	public bool isHuman = false;
 	public bool isNeutral = false;
 	public Dictionary<Resource, float> resources;
@@ -170,9 +171,10 @@ public class Player
 	//TODO: add scene state / unit list or whatever else is needed here later
 	public void think() {
 		if (isHuman) return;
-		if (!isNeutral) {
+		// Don't build any units until the human player builds a unit.
+		if (humanHasMoved && !isNeutral) {
 			if (has (UnitData.getCost(UnitType.TRADER))) {
-				//TODO: change trainunit to take unit type argument
+				// TODO: build some warships and fight
 				getBase().trainUnit((int) UnitType.MERCHANT);
 			}
 		}
