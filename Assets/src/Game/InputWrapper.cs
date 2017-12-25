@@ -15,7 +15,7 @@ public class InputWrapper : MonoBehaviour {
 
 	void Update () {
 		Transform mainCamera = Camera.main.transform;
-		Vector3 worldMousePosition = getWorldMousePos();
+		Vector3 worldMousePosition = getWorldMousePosition(Input.mousePosition);
 		//Touch myTouch = Input.GetTouch(0);
 		//Touch[] myTouches = Input.touches;
 		//for(int i = 0; i < Input.touchCount; i++)
@@ -54,10 +54,14 @@ public class InputWrapper : MonoBehaviour {
 		prevWorldMousePosition = worldMousePosition;
 	}
 
-	private Vector3 getWorldMousePos() {
-		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+	public static void FocusCameraOn(Vector3 worldPosition) {
+		Vector3 offset = worldPosition - getWorldMousePosition(new Vector2(Screen.width/2f, Screen.height/2f), worldPosition.z);
+		Camera.main.transform.Translate(offset, Space.World);
+	}
+
+	private static Vector3 getWorldMousePosition(Vector2 mousePosition, float desiredZ = -0.2f) {
+		Ray ray = Camera.main.ScreenPointToRay(mousePosition);
 		// Take the intersection of the ray and the z=desiredZ plane
-		float desiredZ = -0.2f;
 		return ray.origin + ((desiredZ - ray.origin.z) / ray.direction.z) * ray.direction;
 	}
 
@@ -71,26 +75,4 @@ public class InputWrapper : MonoBehaviour {
 		}
 		return ret;
 	}
-
-	/*
-	 * the following are old functions that converted various coordinates and assumed orthographic view
-	 * I want a single class for input and camera control and another class for overlay stuff
-
-	Vector2 getGUIMousePos() {
-		return screenToGUI(Input.mousePosition);
-	}
-
-	Vector2 worldToGUI(Vector2 p) {
-		return screenToGUI(Camera.main.WorldToScreenPoint(p));
-	}
-
-	float worldToGUI(float f) {
-		// TODO: compute this once and later just multiply f
-		return worldToGUI(new Vector2(f, 0)).x - worldToGUI(new Vector2(0, 0)).x;
-	}
-
-	Vector2 screenToGUI(Vector2 p) {
-		return new Vector2(p.x, Screen.height - p.y);
-	}
-	*/
 }

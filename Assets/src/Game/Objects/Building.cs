@@ -189,7 +189,7 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 
 	public void handleClick(int mouseButton) {
 		if (type == BuildingType.COLONY) {
-			Scene.get().players[Scene.get().HUMAN_PLAYER].toggleTrading(this);
+			Scene.get().players[Player.HUMAN_PLAYER].toggleTrading(this);
 		}
 	}
 

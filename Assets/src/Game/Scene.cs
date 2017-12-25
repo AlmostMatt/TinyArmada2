@@ -19,8 +19,6 @@ public class Scene : MonoBehaviour {
 	public List<Building> buildings;
 	[HideInInspector]
 	public bool paused = false;
-	[HideInInspector]
-	public int HUMAN_PLAYER = 1;
 
 	private HashSet<UnitGroup> groups;
 
@@ -40,16 +38,15 @@ public class Scene : MonoBehaviour {
 		groups = new HashSet<UnitGroup>();
 
 		// create players
-		for (int i = 0; i <= 4; i++) {
+		for (int i = 0; i <= 2; i++) {
 			players.Add(new Player(i));
-			if (players[i].isHuman) {
-				HUMAN_PLAYER = i;
-				GUIOverlay.get().setPlayer(players[i]);
-			}
 		}
 		map.generateMap(players);
 		buildings = map.getBuildings();
-		players[HUMAN_PLAYER].tradeWithNClosest(3);
+		Player humanPlayer = players[Player.HUMAN_PLAYER];
+		GUIOverlay.get().setPlayer(humanPlayer);
+		humanPlayer.tradeWithNClosest(3);
+		InputWrapper.FocusCameraOn(humanPlayer.getBase().getPosition());
 	}
 
 	public void spawnUnit(Building building, UnitType unitType) {

@@ -16,6 +16,8 @@ public enum Resource {FOOD=0, WOOD=1, GOLD=2, STONE=3};
 
 public class Player
 {
+	public static int HUMAN_PLAYER = 1;
+
 	public Color color;
 	public int number;
 	public List<Unit> units = new List<Unit>(); // units add themselves
