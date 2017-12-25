@@ -10,8 +10,8 @@ public class Map : MonoBehaviour {
 	public GameObject islandObject;
 
     // grid size
-	private int w = 30;
-    private int h = 20;
+	private int mapWidth;
+    private int mapHeight;
     private float tileSize = 1f;
 	
 	private List<List<Tile>> tileMap;
@@ -54,13 +54,15 @@ public class Map : MonoBehaviour {
 	
 	}
 
-	public void generateMap(List<Player> players) {
+	public void generateMap(List<Player> players, int width=20, int height=30) {
+		mapWidth = width;
+		mapHeight = height;
 		tileMap = new List<List<Tile>>();
 		buildings = new List<Building>();
 		// default - water
-		for (int x = 0; x < w; ++x) {
+		for (int x = 0; x < mapWidth; ++x) {
 			tileMap.Add(new List<Tile>());
-			for (int y = 0; y < h; ++y) {
+			for (int y = 0; y < mapHeight; ++y) {
 				tileMap[x].Add(Tile.WATER);
 			}
 		}
@@ -81,8 +83,8 @@ public class Map : MonoBehaviour {
         System.Random rnd = new System.Random();
         int i = 0;
         while (i < numislands) {
-            int x = Random.Range(1,w-1);
-            int y = Random.Range(1,h-1);
+            int x = Random.Range(1,mapWidth-1);
+            int y = Random.Range(1,mapHeight-1);
             if (!isWater(getTile (x,y))) { continue; }
 
             // a set of water values that could be made into land
@@ -99,7 +101,7 @@ public class Map : MonoBehaviour {
                 foreach (Vector2 adj in getNeighbours4(randTile)) {
 					if (isWater(getTile(adj))) {
 						// exclude the outer border
-						if (adj.x > 0 && adj.y > 0 && adj.x < w - 1 && adj.y < h - 1) {
+						if (adj.x > 0 && adj.y > 0 && adj.x < mapWidth - 1 && adj.y < mapHeight - 1) {
 	                        adjacentWater.Add(adj);
 						}
                     }
@@ -152,15 +154,30 @@ public class Map : MonoBehaviour {
 			}
 		}
 
-		// players and bases
-		foreach (Player p in players) {
-			if (p.isNeutral || validBuildingTiles.Count == 0) continue;
-			Vector2 buildingPos = validBuildingTiles.popRandom();
+		// Put each player's base at the potential tile closest to their side of the map. Player1 should spawn at -y
+		// Player 0 is neutral. Player 1 should spawn at +y.
+		for (int playerIndex=1; playerIndex < players.Count; playerIndex++) {
+			float angleFromCenter = (Mathf.PI/2f) + (playerIndex * 2f * Mathf.PI / (players.Count - 1));
+			Vector2 preferredTile = 0.9f * new Vector2(
+				mapWidth * (0.5f + 0.5f * Mathf.Cos(angleFromCenter)),
+				mapHeight * (0.5f + 0.5f * Mathf.Sin(angleFromCenter)));
+			float minDistFromPreferred = float.MaxValue;
+			Vector2 buildingPos = Vector2.zero;
+			foreach (Vector2 possibleTile in validBuildingTiles) {
+				// TODO: ignore docks that face away from the center of the map.
+				// (The dot product of dockDirection and angleFromCenter should be negative)
+				float distFromPreferred = (possibleTile - preferredTile).sqrMagnitude;
+				if (distFromPreferred < minDistFromPreferred) {
+					minDistFromPreferred = distFromPreferred;
+					buildingPos = possibleTile;
+				}
+			}
+			validBuildingTiles.Remove(buildingPos);
 			Vector2 dockTile = getRandomValidNeighbour4(buildingPos, validDockTiles);
 			setTile(buildingPos, Tile.BUILDING);
 			Building building = Instantiate(baseObject).GetComponent<Building>();
 			building.init(buildingPos, dockTile, BuildingType.BASE);
-			building.setOwner(p);
+			building.setOwner(players[playerIndex]);
 			buildings.Add(building);
 		}
 
@@ -177,8 +194,8 @@ public class Map : MonoBehaviour {
         Pathing.updateMap(this);
 
 		// Spawn trees.
-		for (int x = 0; x < w; ++x) {
-			for (int y = 0; y < h; ++y) {
+		for (int x = 0; x < mapWidth; ++x) {
+			for (int y = 0; y < mapHeight; ++y) {
 				if (tileMap[x][y] == Tile.GRASS) {
 					for (int tr=0; tr<treeDensity; ++tr) {
 						GameObject tree = Instantiate(treeObject);
@@ -221,11 +238,11 @@ public class Map : MonoBehaviour {
     }
     
     public Vector3 mapToGame(Vector2 mapPos) {
-        return tileSize * (Vector3) (mapPos - new Vector2(w/2f, h/2f));
+        return tileSize * (Vector3) (mapPos - new Vector2(mapWidth/2f, mapHeight/2f));
     }
 
 	public Vector2 gameToMap(Vector3 gamePos) {
-        Vector2 mapPos = ((1/tileSize) * ((Vector2) gamePos) + new Vector2(w/2f, h/2f));
+        Vector2 mapPos = ((1/tileSize) * ((Vector2) gamePos) + new Vector2(mapWidth/2f, mapHeight/2f));
 		mapPos.x = Mathf.RoundToInt(mapPos.x);
 		mapPos.y = Mathf.RoundToInt(mapPos.y);
 		return mapPos;
@@ -285,9 +302,9 @@ public class Map : MonoBehaviour {
     public HashSet<Vector2> getNeighbours4(Vector2 coord) {
         HashSet<Vector2> result = new HashSet<Vector2>();
         if (coord.x > 0) result.Add(new Vector2(coord.x - 1, coord.y));
-        if (coord.x < w - 1) result.Add(new Vector2(coord.x + 1, coord.y));
+        if (coord.x < mapWidth - 1) result.Add(new Vector2(coord.x + 1, coord.y));
         if (coord.y > 0) result.Add(new Vector2(coord.x, coord.y - 1));
-        if (coord.y < h -1) result.Add(new Vector2(coord.x, coord.y + 1));
+        if (coord.y < mapHeight -1) result.Add(new Vector2(coord.x, coord.y + 1));
         return result;
     }
 
@@ -298,8 +315,8 @@ public class Map : MonoBehaviour {
 
     public HashSet<Vector2> getNeighbours8(Vector2 coord) {
         HashSet<Vector2> result = new HashSet<Vector2>();
-        for (int x = Mathf.Max ((int) coord.x - 1, 0); x <= Mathf.Min(w - 1, (int) coord.x + 1); x++) {
-            for (int y = Mathf.Max ((int) coord.y - 1, 0); y <= Mathf.Min(h - 1, (int) coord.y + 1); y++) {
+        for (int x = Mathf.Max ((int) coord.x - 1, 0); x <= Mathf.Min(mapWidth - 1, (int) coord.x + 1); x++) {
+            for (int y = Mathf.Max ((int) coord.y - 1, 0); y <= Mathf.Min(mapHeight - 1, (int) coord.y + 1); y++) {
                 result.Add(new Vector2(x,y));
             }
         }
