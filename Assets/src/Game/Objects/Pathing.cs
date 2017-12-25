@@ -93,11 +93,11 @@ public class Pathing
     }
 
 	// Returns whether or not there is a wall between t1 and t2.
-	public static bool raycast(Vector2 t1, Vector2 t2, int layerMask = Physics2D.DefaultRaycastLayers) {
+	public static bool raycast(Vector2 t1, float unitRadius, Vector2 t2, int layerMask = Physics2D.DefaultRaycastLayers) {
 		t1 = map.mapToGame(t1);
 		t2 = map.mapToGame(t2);
 		Debug.DrawLine((Vector3) t1, (Vector3) t2, Color.magenta, 0f, false);
-		RaycastHit2D hitInfo = Physics2D.Raycast(t1, t2-t1, (t2-t1).magnitude, layerMask);
+		RaycastHit2D hitInfo = Physics2D.CircleCast(t1, unitRadius, t2-t1, (t2-t1).magnitude, layerMask);
 		if (hitInfo.collider != null) {
 			return true;
 		}
@@ -141,7 +141,7 @@ public class Pathing
 	 * Idea2: pathfind with heuristic the minimum of the manhattan distances
 	 * 		IE a non-linear graph where all of the desination nodes have a shortcut to a new goal node
 	 */
-	public static Path findShortestPath(Vector2 p1, HashSet<Vector2> p2Set, float destRadius) {
+	public static Path findShortestPath(Vector2 p1, HashSet<Vector2> p2Set, float destRadius, float unitRadius = 0.25f) {
 		Vector2 t1 = map.gameToMap(p1);
 		HashSet<Vector2> t2Set = new HashSet<Vector2>();
 		// map tile to point for more precision
@@ -169,7 +169,7 @@ public class Pathing
 		// compute path, (heirarchical?)
 		List<Vector2> tiles = astar(t1, t2Set);
 		// smooth path
-		tiles = smoothed(t1, tiles);
+		tiles = smoothed(t1, tiles, unitRadius);
 		// cache parts of path (each tile's shortest path to each later tile on the same path is optimal)
 		// convert back to game coordinates
 		Vector2 prevPoint = path.start;
@@ -188,32 +188,33 @@ public class Pathing
 	}
 
     // takes game coordinates
-    public static Path findPath(Vector2 p1, Vector2 p2, float destRadius) {
+	public static Path findPath(Vector2 p1, Vector2 p2, float destRadius, float unitRadius = 0.25f) {
 		HashSet<Vector2> p2Set = new HashSet<Vector2>();
 		p2Set.Add(p2);
-		return findShortestPath(p1, p2Set, destRadius);
+		return findShortestPath(p1, p2Set, destRadius, unitRadius);
     }
 
-	private static List<Vector2> smoothed(Vector2 start, List<Vector2> path) {
-		// TODO: this is not the optimal path.
-		// consider: ideal path move 5 straight then turn, but the raycast says I can move 10 straight so it does that instead
+	private static List<Vector2> smoothed(Vector2 start, List<Vector2> path, float unitRadius = 0.25f) {
+		// TODO: This may not generate optimal paths.
+		// Consider: The ideal path is up 1 and diagonal 3. This "Smooths" the path to up3, and then moves horizontally 1.
 
 		// binary search to see how far you can raycast
-		Vector2 current = start;
 		List<Vector2> smoothPath = new List<Vector2>();
 		int i1 = 0; // first candidate for smoothed path
+		Vector2 current = start;
 		while (i1 < path.Count) {
 			int i2 = path.Count - 1;
 			while (i1 < i2) {
 				int i = (i1 + i2 + 1)/2;
-				bool canSkip = !raycast(current, path[i], LayerMask.GetMask("Walls"));
+				bool canSkip = !raycast(current, unitRadius, path[i], LayerMask.GetMask("Walls"));
 				if (canSkip) {
 					i1 = i;
 				} else {
 					i2 = i - 1;
 				}
 			}
-			smoothPath.Add (path[i1]);
+			smoothPath.Add(path[i1]);
+			current = path[i1];
 			i1++;
 		}
 		return smoothPath;

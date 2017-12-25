@@ -120,8 +120,8 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 		steering.addBehaviour(0f, brakeBehaviour);
 		//steering.addBehaviour(0.5f, new Separate(nearbyUnits, 0.7f));
 		steering.addBehaviour(1.2f, new UnalignedCollisionAvoidance(nearbyUnits));
+		steering.addBehaviour(0.3f, new WallAvoidance(LayerMask.GetMask("Walls")));
 		// TODO: queueing (for other boats visiting the same dock)
-		// TODO: wall avoidance
 		// TODO: align with others in the same group
 	}
 	
