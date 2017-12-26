@@ -51,87 +51,79 @@ public class Map : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
+		for (int x = 0; x <= mapWidth; x++) {
+			Debug.DrawLine(mapToGame(-0.5f + x, -0.5f), mapToGame(-0.5f + x, mapHeight - 0.5f), Color.black, 0f, true);
+		}
+		for (int y = 0; y <= mapHeight; y++) {
+			Debug.DrawLine(mapToGame(-0.5f, -0.5f + y), mapToGame(mapWidth - 0.5f, -0.5f + y), Color.black, 0f, true);
+		}
 	}
 
-	public void generateMap(List<Player> players, int width=20, int height=30) {
+	public void generateMap(List<Player> players, int width=20, int height=30, int tilesBetweenIslands=2) {
 		mapWidth = width;
 		mapHeight = height;
 		tileMap = new List<List<Tile>>();
 		buildings = new List<Building>();
-		// default - water
+
+		// Default the entire map to water.
+		RandomSet<Vector2> waterTiles = new RandomSet<Vector2>();
 		for (int x = 0; x < mapWidth; ++x) {
 			tileMap.Add(new List<Tile>());
 			for (int y = 0; y < mapHeight; ++y) {
 				tileMap[x].Add(Tile.WATER);
+				// The border of the map is water, but we don't want to spawn islands that touch the edge.
+				if (x>0 && x<mapWidth-1 && y>0 && y<mapHeight-1) {
+					waterTiles.Add(new Vector2(x,y));
+				}
 			}
 		}
 
-        // possibly: do floodfill of tiles to check 'reachability' of each body of water / dock
-        // or keep track of cycles and only create land where cycles exists
-        // or just dig trenches/channels/rivers/bays afterward
-
-		HashSet<Vector2> tempTiles = new HashSet<Vector2>();
-
-		// terrain
-		int numislands = 10;//15;
+		// Terrain
+		int numislands = 12;//15;
 		int islandSizeMin = 3;
 		int islandSizeMax = 18;
         int treeDensity = 4;
 		int numcolonies = 20;
         //Random.seed = 
-        System.Random rnd = new System.Random();
-        int i = 0;
-        while (i < numislands) {
-            int x = Random.Range(1,mapWidth-1);
-            int y = Random.Range(1,mapHeight-1);
-            if (!isWater(getTile (x,y))) { continue; }
+		for (int islandsCreated=0; islandsCreated < numislands && waterTiles.Count > 0; islandsCreated++) {
+			Vector2 initialTile = waterTiles.popRandom();
 
-            // a set of water values that could be made into land
-            RandomSet<Vector2> adjacentWater = new RandomSet<Vector2>(rnd);
-            adjacentWater.Add(new Vector2(x,y));
+			// A set of water values that could be made into land
+			RandomSet<Vector2> adjacentWater = new RandomSet<Vector2>();
+			RandomSet<Vector2> islandTiles = new RandomSet<Vector2>();
+            adjacentWater.Add(initialTile);
 
-			int numland = Random.Range(islandSizeMin, islandSizeMax + 1);
-            for (int n = 0; n < numland && adjacentWater.Count > 0; n++) {
+			int islandSize = Random.Range(islandSizeMin, islandSizeMax + 1);
+            for (int n = 0; n < islandSize && adjacentWater.Count > 0; n++) {
                 Vector2 randTile = adjacentWater.popRandom();
+				waterTiles.Remove(randTile);
+				adjacentWater.UnionWith(getValidNeighbour4(randTile, waterTiles));
+
                 setTile(randTile, Tile.GRASS);
 				GameObject island = Instantiate(islandObject);
 				island.transform.parent = transform;
 				island.transform.localPosition = mapToGame(randTile);
-                foreach (Vector2 adj in getNeighbours4(randTile)) {
-					if (isWater(getTile(adj))) {
-						// exclude the outer border
-						if (adj.x > 0 && adj.y > 0 && adj.x < mapWidth - 1 && adj.y < mapHeight - 1) {
-	                        adjacentWater.Add(adj);
-						}
-                    }
-				}
+				islandTiles.Add(randTile);
 			}
-			// Mark an area around each island as reserved so that islands don't touch each other
-			foreach (Vector2 adj in adjacentWater) {
-				setTile(adj, Tile.TEMP);
-				tempTiles.Add(adj);
-				foreach (Vector2 adj2 in getNeighbours8(adj)) {
-					if (isWater(getTile(adj2))) {
-						setTile(adj2, Tile.TEMP);
-						tempTiles.Add(adj2);
-					}
+			// Remove water tiles near the island from the available water tiles for future island generation.
+			for (int i=0; i < tilesBetweenIslands; i++) {
+				RandomSet<Vector2> temporarySet = new RandomSet<Vector2>();
+				foreach (Vector2 tile in islandTiles) {
+					temporarySet.UnionWith(getValidNeighbour8(tile, waterTiles));
 				}
+				islandTiles = temporarySet;
+				waterTiles.DifferenceWith(islandTiles);
 			}
-            ++i;
         }
 
-		foreach (Vector2 t in tempTiles) {
-			setTile (t, Tile.WATER);
-		}
-
-		// Floodfill water tiles. For each tile, count the number of adjacent land tiles.
+		// Floodfill water tiles that are reachable from the corner of the map.
+		// For each tile, count the number of adjacent land tiles.
 		// Any water tile with 1-2 adjacent land tiles is a valid place for a dock.
 		// The set of land tiles adjacent to validDockTiles is the set of validBuildingTiles.
 		HashSet<Vector2> seen = new HashSet<Vector2>();
 		Queue<Vector2> todo = new Queue<Vector2>();
 		HashSet<Vector2> validDockTiles = new HashSet<Vector2>();
-		RandomSet<Vector2> validBuildingTiles = new RandomSet<Vector2>(rnd);
+		RandomSet<Vector2> validBuildingTiles = new RandomSet<Vector2>();
 		// since I excluded the outer border, it is definitely water
 		todo.Enqueue(new Vector2(0,0));
 		seen.Add(todo.Peek());
@@ -150,7 +142,7 @@ public class Map : MonoBehaviour {
 			}
 			if (adjacentCoasts.Count > 0 && adjacentCoasts.Count < 3) {
 				validDockTiles.Add(randTile);
-				validBuildingTiles.AddRange(adjacentCoasts);
+				validBuildingTiles.UnionWith(adjacentCoasts);
 			}
 		}
 
@@ -173,7 +165,7 @@ public class Map : MonoBehaviour {
 				}
 			}
 			validBuildingTiles.Remove(buildingPos);
-			Vector2 dockTile = getRandomValidNeighbour4(buildingPos, validDockTiles);
+			Vector2 dockTile = getValidNeighbour4(buildingPos, validDockTiles).popRandom();
 			setTile(buildingPos, Tile.BUILDING);
 			Building building = Instantiate(baseObject).GetComponent<Building>();
 			building.init(buildingPos, dockTile, BuildingType.BASE);
@@ -182,9 +174,9 @@ public class Map : MonoBehaviour {
 		}
 
 		// colonies
-		for (i = 0; i < numcolonies && validBuildingTiles.Count > 0; i++) {
+		for (int i = 0; i < numcolonies && validBuildingTiles.Count > 0; i++) {
 			Vector2 buildingPos = validBuildingTiles.popRandom();
-			Vector2 dockTile = getRandomValidNeighbour4(buildingPos, validDockTiles);
+			Vector2 dockTile = getValidNeighbour4(buildingPos, validDockTiles).popRandom();
 			setTile(buildingPos, Tile.BUILDING);
 			Building building = Instantiate(buildingObject).GetComponent<Building>();
 			building.init(buildingPos, dockTile, BuildingType.COLONY);
@@ -288,13 +280,22 @@ public class Map : MonoBehaviour {
         return isWater(tile);
     }
 
-	public Vector2 getRandomValidNeighbour4(Vector2 currentTile, ICollection<Vector2> validTiles) {
+	// Returns neighbours of currentTile that are also present in validTiles.
+	public RandomSet<Vector2> getValidNeighbour4(Vector2 currentTile, ICollection<Vector2> validTiles) {
 		RandomSet<Vector2> potentialNeighbours = new RandomSet<Vector2>();
-		potentialNeighbours.AddRange(getNeighbours4(currentTile));
-		potentialNeighbours.Intersect(validTiles);
-		return potentialNeighbours.popRandom();
+		potentialNeighbours.UnionWith(getNeighbours4(currentTile));
+		potentialNeighbours.IntersectWith(validTiles);
+		return potentialNeighbours;
 	}
-    
+
+	// Returns neighbours of currentTile that are also present in validTiles.
+	public RandomSet<Vector2> getValidNeighbour8(Vector2 currentTile, ICollection<Vector2> validTiles) {
+		RandomSet<Vector2> potentialNeighbours = new RandomSet<Vector2>();
+		potentialNeighbours.UnionWith(getNeighbours8(currentTile));
+		potentialNeighbours.IntersectWith(validTiles);
+		return potentialNeighbours;
+	}
+
     public HashSet<Vector2> getNeighbours4(int x, int y) {
         return getNeighbours4(new Vector2(x,y));
     }
