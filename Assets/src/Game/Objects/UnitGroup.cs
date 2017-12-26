@@ -24,12 +24,19 @@ public class UnitGroup : IEnumerable<Unit>, Clickable
 		new Color(1,1,0, 0.8f)
 	};
 
-	public UnitGroup ()
+	public UnitGroup (List<Unit> unitsToAdd, GameObject flagObject)
 	{
 		numUnits = 0;
 		radius = 0;
 		units = new HashSet<Unit>();
 		color = colors[Random.Range(0, colors.Length)];
+
+		foreach (Unit unit in unitsToAdd) {
+			unit.setGroup(this);
+		}
+		flag = flagObject.GetComponent<GroupFlag>();
+		flag.setGroup(this);
+		flag.transform.position = dest;
 	}
 
 	public bool isEmpty() {
@@ -76,12 +83,6 @@ public class UnitGroup : IEnumerable<Unit>, Clickable
 		return p/count;
 	}
 
-	public void setFlag(GameObject flagObject) {
-		flag = flagObject.GetComponent<GroupFlag>();
-		flag.setGroup(this);
-		flag.transform.position = dest;
-	}
-
 	public void cleanup() {
 		if (owner != null) {
 			owner.unitgroups.Remove(this);
@@ -120,7 +121,7 @@ public class UnitGroup : IEnumerable<Unit>, Clickable
 	 CLICKABLE
 	 */
 	public bool clickTest(int mouseButton, Vector2 mousePos) {
-		return getFlag().clickTest(mouseButton, mousePos);
+		return owner.number == Player.HUMAN_PLAYER && getFlag().clickTest(mouseButton, mousePos);
 	}
 	
 	public void handleClick(int mouseButton) {
@@ -157,10 +158,10 @@ public class UnitGroup : IEnumerable<Unit>, Clickable
 		}
 		// k-means clustering
 		RandomSet<Unit> unitset = new RandomSet<Unit>(units);
-		HashSet<Unit>[] kgroups = new HashSet<Unit>[2];
+		List<Unit>[] kgroups = new List<Unit>[2];
 		Vector2[] kmeans = new Vector2[2];
 		for (int k=0; k<2; ++k) {
-			kgroups[k] = new HashSet<Unit>();
+			kgroups[k] = new List<Unit>();
 		}
 		for (int repetition = 0; repetition < 10; ++repetition) {
 			for (int k=0; k<2; ++k) {
@@ -185,10 +186,7 @@ public class UnitGroup : IEnumerable<Unit>, Clickable
 			}
 		}
 		// TODO: prefer equally sized groups
-		UnitGroup newGroup = Scene.get().createUnitGroup();
-		foreach (Unit u in kgroups[1]) {
-			u.setGroup(newGroup);
-		}
+		UnitGroup newGroup = Scene.get().createUnitGroup(kgroups[1]);
 		Vector2 groupOffset = (kmeans[1] - kmeans[0]).normalized;
 		newGroup.setDest(dest + groupOffset/2, false);
 		setDest(dest - groupOffset/2, false);

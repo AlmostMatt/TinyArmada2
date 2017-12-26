@@ -28,6 +28,10 @@ public class Path
             // accelerate toward the next node
 			followPath(steering, seekBehaviour, arrivalBehaviour, brakeBehaviour);
 		} else {
+			if (Pathing.raycastGameCoordinates(steering.getPosition(), steering.getSize(), next, LayerMask.GetMask("Walls"))) {
+				// In case the unit detoured and there are walls in the way, recalculate the path.
+				points = Pathing.findPath(steering.getPosition(), goal, destRadius, steering.getSize()).points;
+			}
 			// Stop after arriving.
 			steering.updateWeight(brakeBehaviour, arrived ? 1f : 0f);
 			// Arrival for the last point, seek for every other point
@@ -90,19 +94,21 @@ public class Pathing
     public static void updateMap(Map newmap) {
         map = newmap;
         // generate something like a navmesh if desired
-    }
+	}
+
+	public static bool raycastMapCoordinates(Vector2 t1, float unitRadius, Vector2 t2, int layerMask = Physics2D.DefaultRaycastLayers) {
+		return raycastGameCoordinates(map.mapToGame(t1), unitRadius, map.mapToGame(t2), layerMask);
+	}
 
 	// Returns whether or not there is a wall between t1 and t2.
-	public static bool raycast(Vector2 t1, float unitRadius, Vector2 t2, int layerMask = Physics2D.DefaultRaycastLayers) {
-		t1 = map.mapToGame(t1);
-		t2 = map.mapToGame(t2);
-		Debug.DrawLine((Vector3) t1, (Vector3) t2, Color.magenta, 0f, false);
+	public static bool raycastGameCoordinates(Vector2 t1, float unitRadius, Vector2 t2, int layerMask = Physics2D.DefaultRaycastLayers) {
+		//Debug.DrawLine(t1, t2, Color.magenta, 0f, false);
 		RaycastHit2D hitInfo = Physics2D.CircleCast(t1, unitRadius, t2-t1, (t2-t1).magnitude, layerMask);
 		if (hitInfo.collider != null) {
 			return true;
 		}
 		return false;
-    }
+	}
 
     private static PathNode getNode(Dictionary<Vector2, PathNode> nodeMap, Vector2 tile, HashSet<Vector2> goal) {
         if (nodeMap.ContainsKey(tile)) {
@@ -206,7 +212,7 @@ public class Pathing
 			int i2 = path.Count - 1;
 			while (i1 < i2) {
 				int i = (i1 + i2 + 1)/2;
-				bool canSkip = !raycast(current, unitRadius, path[i], LayerMask.GetMask("Walls"));
+				bool canSkip = !raycastMapCoordinates(current, unitRadius, path[i], LayerMask.GetMask("Walls"));
 				if (canSkip) {
 					i1 = i;
 				} else {

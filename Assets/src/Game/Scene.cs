@@ -54,7 +54,8 @@ public class Scene : MonoBehaviour {
         // units should be in front of buildings
 		Unit newUnit = Instantiate(unitObject).GetComponent<Unit>();
 		Vector2 pos = building.getDock();
-		newUnit.transform.position = new Vector3(pos.x, pos.y, 0f);
+		// Add slight randomization so that simultaneously trained units don't have identical positions.
+		newUnit.transform.position = new Vector3(pos.x, pos.y + Random.Range(-0.1f, 0.1f), 0f);
 		newUnit.init(building.owner, unitType);
 		foreach (Unit otherUnit in units) {
 			newUnit.nearbyUnits.Add(otherUnit.GetComponent<Steering>());
@@ -64,8 +65,7 @@ public class Scene : MonoBehaviour {
 		units.Add(newUnit);
 		Vector3 offset = (Vector3) building.getDock() - building.gamePos;
 		if (!newUnit.canTrade()) {
-			UnitGroup newGroup = createUnitGroup();
-			newUnit.setGroup(newGroup);
+			UnitGroup newGroup = createUnitGroup(newUnit);
 			newGroup.setDest(building.gamePos + 2.5f * offset);
 		} else {
 			newUnit.moveTo(building.gamePos + 1.5f * offset, newUnit.radius);
@@ -136,10 +136,12 @@ public class Scene : MonoBehaviour {
 		return singleton;
 	}
 
-	public UnitGroup createUnitGroup() {
-		UnitGroup group = new UnitGroup();
-		GameObject flag = Instantiate(flagObject);
-		group.setFlag(flag);
+	public UnitGroup createUnitGroup(Unit unit) {
+		return createUnitGroup(new List<Unit>(){unit});
+	}
+
+	public UnitGroup createUnitGroup(List<Unit> units) {
+		UnitGroup group = new UnitGroup(units, Instantiate(flagObject));
 		groups.Add(group);
 		return group;
 	}

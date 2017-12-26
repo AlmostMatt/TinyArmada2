@@ -2,11 +2,12 @@ GUI sizing/scaling
 	http://unity3d.com/learn/tutorials/modules/beginner/ui/rect-transform
 
 
-draw a line from click down to current
-
 groups follow path while it is being drawn and paths to stop when it hits a wall
 
 remove persistent hover
+
+using System.Linq;
+simplify various code pieces
 
 singleton groups?
 	or subset groups in general
@@ -20,8 +21,12 @@ singleton groups?
 group 'colors' and overlay buttons for each color - overlay button moves camera to the group
 	try to reuse colors in case a group is accidentally disbanded/merged
 		(of hover, take most common colorID that will be available and reuse)
-		
-obstacle avoidance, "flocking", queueing
+
+queueing near docks
+
+choose what type of resource to collect (+ and - buttons by the resource, or different resources for different boats/buildings)
+
+AI controlled military ships
 
 HUD:
 	selection abilities / trainable units / warpin
@@ -30,11 +35,7 @@ HUD:
 	scrolling
 	health bars
 
-Camera movement
-
-buildings
-	dynamic navmesh - excluding buildings/walls?
-	(unity has some 3d navmesh code)
+dynamic navmesh (using unity code)
 
 unit AI / autocast abilities for combat (some auto positioning too, if left idle)
 

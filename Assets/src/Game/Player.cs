@@ -17,6 +17,19 @@ public enum Resource {FOOD=0, WOOD=1, GOLD=2, STONE=3};
 public class Player
 {
 	public static int HUMAN_PLAYER = 1;
+	public static UnitType[] AI_BUILD_ORDER = {
+		UnitType.MERCHANT, 
+		UnitType.MERCHANT, 
+		UnitType.MERCHANT, 
+		UnitType.GALLEY,
+		UnitType.MERCHANT,
+		UnitType.MERCHANT,
+		UnitType.GALLEY,
+		UnitType.GALLEY,
+		UnitType.MERCHANT, 
+		UnitType.MERCHANT, 
+		UnitType.MERCHANT, 
+	};
 
 	public Color color;
 	public int number;
@@ -172,15 +185,32 @@ public class Player
 	
 	//TODO: add scene state / unit list or whatever else is needed here later
 	public void think() {
-		if (isHuman) return;
-		// Don't build any units until the human player builds a unit.
-		if (humanHasMoved && !isNeutral) {
-			if (has (UnitData.getCost(UnitType.TRADER))) {
-				// TODO: build some warships and fight
-				getBase().trainUnit((int) UnitType.MERCHANT);
+		if (isHuman || !humanHasMoved || isNeutral) {
+			return;
+		}
+		// AI logic goes here for now.
+
+		DefaultDict<UnitType, int> currentUnitCounts = new DefaultDict<UnitType, int>(0);
+		foreach (Unit unit in units) {
+			currentUnitCounts[unit.type] += 1;
+		}
+		tradeWithNClosest(Mathf.Min(8, 1 + currentUnitCounts[UnitType.MERCHANT]));
+		bool isMaxBuild = true;
+		foreach (UnitType desiredUnitType in AI_BUILD_ORDER) {
+			currentUnitCounts[desiredUnitType] -= 1;
+			if (currentUnitCounts[desiredUnitType] < 0) {
+				isMaxBuild = false;
+				if (has(UnitData.getCost(desiredUnitType))) {
+					getBase().trainUnit((int) desiredUnitType);
+				} else {
+					break;
+				}
 			}
 		}
-		tradeWithNClosest(Mathf.Min(8, 1 + units.Count));
+		// Spend excess money on galleys
+		if (isMaxBuild && has(UnitData.getCost(UnitType.GALLEY))) {
+			getBase().trainUnit((int) UnitType.GALLEY);
+		}
 	}
 
 	public void tradeWithNClosest(int n) {
