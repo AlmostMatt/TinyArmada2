@@ -46,6 +46,9 @@ public class GroupFlag : MonoBehaviour, Clickable {
 
 	public void setHover(bool isHovering)
 	{
+		if (gameObject == null) {
+			return;
+		}
 		if (isHovering) {
 			ring.color = new Color(1f, 0.5f, 0.5f);
 			icon.color = new Color(1f, 0.5f, 0.5f);
@@ -56,6 +59,9 @@ public class GroupFlag : MonoBehaviour, Clickable {
 	}
 
 	public void handleMouseDown(int mouseButton, Vector2 mousePos) {
+		if (gameObject == null) {
+			return;
+		}
 		ring.color = new Color(1f, 0.5f, 0.5f);
 		icon.color = new Color(1f, 0.5f, 0.5f);
 	}
