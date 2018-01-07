@@ -161,7 +161,7 @@ public class Player
 	
 	public Path getTradeRoute(Building building) {
 		if (!tradeRoute.ContainsKey(building)) {
-			tradeRoute[building] = Pathing.findPath(getBase().getDock(), building.getDock(), 0.25f);
+			tradeRoute[building] = Pathing.findPath(getBase().getDock(), building.getDock(), building.getDockRadius());
 			unitsTrading[building] = new HashSet<Unit>();
 		}
 		return tradeRoute[building].copy();

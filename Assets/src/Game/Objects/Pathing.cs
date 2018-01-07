@@ -29,8 +29,16 @@ public class Path
 			followPath(steering, seekBehaviour, arrivalBehaviour, brakeBehaviour);
 		} else {
 			if (Pathing.raycastGameCoordinates(steering.getPosition(), steering.getSize(), next, LayerMask.GetMask("Walls"))) {
-				// In case the unit detoured and there are walls in the way, recalculate the path.
-				points = Pathing.findPath(steering.getPosition(), goal, destRadius, steering.getSize()).points;
+				// A wall is in the way. Check if the raycast would be fine from the center of the current tile.
+				Vector2 currentTileCenter = Pathing.map.mapToGame(Pathing.map.gameToMap(steering.getPosition()));
+				if (Pathing.raycastGameCoordinates(currentTileCenter, steering.getSize(), next, LayerMask.GetMask("Walls"))) {
+					// The unit must have detoured and there are now walls in the way, calculate a new path.
+					points = Pathing.findPath(steering.getPosition(), goal, destRadius, steering.getSize()).points;
+				} else {
+					// The unit is stuck because they are a little bit off-center.
+					points.Insert(0,currentTileCenter);
+				}
+
 			}
 			// Stop after arriving.
 			steering.updateWeight(brakeBehaviour, arrived ? 1f : 0f);
@@ -89,7 +97,7 @@ public class Pathing
 {
     // Pool and reuse priority open queue and closed set.
     // also the node objects
-    private static Map map;
+    public static Map map;
 
     public static void updateMap(Map newmap) {
         map = newmap;

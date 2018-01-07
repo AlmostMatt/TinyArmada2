@@ -61,6 +61,9 @@ public class GroupFlag : MonoBehaviour, Clickable {
 	}
 	
 	public void handleMouseUp(int mouseButton, Vector2 mousePos) {
+		if (gameObject == null) {
+			return;
+		}
 		ring.color = Color.white;
 		icon.color = Color.white;
 	}

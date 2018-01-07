@@ -59,7 +59,7 @@ public class Map : MonoBehaviour {
 		}
 	}
 
-	public void generateMap(List<Player> players, int width=20, int height=30, int tilesBetweenIslands=2) {
+	public void generateMap(List<Player> players, int width=16, int height=16, int tilesBetweenIslands=2) {
 		mapWidth = width;
 		mapHeight = height;
 		tileMap = new List<List<Tile>>();

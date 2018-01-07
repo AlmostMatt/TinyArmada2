@@ -150,6 +150,10 @@ public class Building : MonoBehaviour, Attackable, Clickable, ObjectWithPosition
 		return dock.position;
 	}
 
+	public float getDockRadius() {
+		return 0.6f;
+	}
+
 	/* 
 	 * ObjectWithPosition
 	 */

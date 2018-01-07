@@ -91,6 +91,10 @@ public class UnitGroup : IEnumerable<Unit>, Clickable
 	}
 	
 	public void setDest(Vector2 d, bool allowMerge = true) {
+		if (flag == null) {
+			// If the last unit in the group was destroyed, do nothing.
+			return;
+		}
 		dest = d;
 		flag.transform.position = d;
 		if (owner.isHuman && allowMerge) {
