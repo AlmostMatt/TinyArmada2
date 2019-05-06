@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityBaseCode.Statuses;
+using UnityBaseCode.Actions;
+using UnityBaseCode.Steering;
 
 public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 	//TODO: call getComponent less often
