@@ -37,10 +37,11 @@ public class Scene : MonoBehaviour {
 		hover = new List<Unit>();
 		groups = new HashSet<UnitGroup>();
 
-		// create players
+		// Create Players (0 is neutral)
 		for (int i = 0; i <= 2; i++) {
 			players.Add(new Player(i));
 		}
+
 		map.generateMap(players);
 		buildings = map.getBuildings();
 		Player humanPlayer = players[Player.HUMAN_PLAYER];
@@ -63,12 +64,12 @@ public class Scene : MonoBehaviour {
 		}
 		newUnit.nearbyBuildings.AddRange(buildings);
 		units.Add(newUnit);
-		Vector3 offset = (Vector3) building.getDock() - building.gamePos;
+		Vector2 offset = (Vector2) building.getDock() - (Vector2) building.gamePos;
 		if (!newUnit.canTrade()) {
 			UnitGroup newGroup = createUnitGroup(newUnit);
-			newGroup.setDest(building.gamePos + 2.5f * offset);
+			newGroup.setDest(building.getDock() + 0.6f * offset);
 		} else {
-			newUnit.moveTo(building.gamePos + 1.5f * offset, newUnit.radius);
+			newUnit.moveTo((Vector2) building.getDock() + 0.2f * offset, newUnit.radius);
 		}
 	}
 
@@ -84,8 +85,8 @@ public class Scene : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update () {
-		foreach (Player p in players) {
-			p.think();
+		foreach (AILogic ai in Player.getAIPlayers()) {
+			ai.think();
 		}
 
 		// dead units
@@ -134,6 +135,18 @@ public class Scene : MonoBehaviour {
 
 	public static Scene get() {
 		return singleton;
+	}
+
+	public static Map getMap() {
+		return singleton.map;
+	}
+
+	public static List<Player> getPlayers() {
+		return singleton.players;
+	}
+
+	public static List<Unit> getUnits() {
+		return singleton.units;
 	}
 
 	public UnitGroup createUnitGroup(Unit unit) {

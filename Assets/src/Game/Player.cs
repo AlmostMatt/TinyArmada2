@@ -17,19 +17,7 @@ public enum Resource {FOOD=0, WOOD=1, GOLD=2, STONE=3};
 public class Player
 {
 	public static int HUMAN_PLAYER = 1;
-	public static UnitType[] AI_BUILD_ORDER = {
-		UnitType.MERCHANT, 
-		UnitType.MERCHANT, 
-		UnitType.MERCHANT, 
-		UnitType.GALLEY,
-		UnitType.MERCHANT,
-		UnitType.MERCHANT,
-		UnitType.GALLEY,
-		UnitType.GALLEY,
-		UnitType.MERCHANT, 
-		UnitType.MERCHANT, 
-		UnitType.MERCHANT, 
-	};
+	private static List<AILogic> aiPlayers = new List<AILogic>();
 
 	public Color color;
 	public int number;
@@ -81,8 +69,15 @@ public class Player
 		}
 		collect (Resource.FOOD, 150f); // temporary fix for spawning units on top of each other resulting in NaN avoidance
 		collect (Resource.GOLD, 50f);
+		if (!isHuman && !isNeutral) {
+			aiPlayers.Add(new AILogic(this));
+		}
 	}
-	
+
+	public static List<AILogic> getAIPlayers() {
+		return aiPlayers;
+	}
+
 	public void collect(Resource res, float amount) {
 		resources[res] += amount;
 		amountChanged(res);
@@ -181,36 +176,6 @@ public class Player
 
 	public void noLongerHeadingTo(Unit u, Building b) {
 		unitsTrading[b].Remove(u);
-	}
-	
-	//TODO: add scene state / unit list or whatever else is needed here later
-	public void think() {
-		if (isHuman || !humanHasMoved || isNeutral) {
-			return;
-		}
-		// AI logic goes here for now.
-
-		DefaultDict<UnitType, int> currentUnitCounts = new DefaultDict<UnitType, int>(0);
-		foreach (Unit unit in units) {
-			currentUnitCounts[unit.type] += 1;
-		}
-		tradeWithNClosest(Mathf.Min(8, 1 + currentUnitCounts[UnitType.MERCHANT]));
-		bool isMaxBuild = true;
-		foreach (UnitType desiredUnitType in AI_BUILD_ORDER) {
-			currentUnitCounts[desiredUnitType] -= 1;
-			if (currentUnitCounts[desiredUnitType] < 0) {
-				isMaxBuild = false;
-				if (has(UnitData.getCost(desiredUnitType))) {
-					getBase().trainUnit((int) desiredUnitType);
-				} else {
-					break;
-				}
-			}
-		}
-		// Spend excess money on galleys
-		if (isMaxBuild && has(UnitData.getCost(UnitType.GALLEY))) {
-			getBase().trainUnit((int) UnitType.GALLEY);
-		}
 	}
 
 	public void tradeWithNClosest(int n) {

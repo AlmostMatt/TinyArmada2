@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 	//TODO: call getComponent less often
 	private int ATTACK = 0;
-	private float range = 1f;
+	public float attackRange = 1f;
 
 	public Sprite[] sprites;
 	public float radius {get; set;}
@@ -74,7 +74,7 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 			break;
 		default:
 			GetComponent<Steering>().setSpeed(1.5f, 5f);
-			range = 3f;
+			attackRange = 3f;
 			break;
 		}
 		unitModel = Instantiate(UnitData.getModel(type));
@@ -155,7 +155,7 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 
 		statusMap.update(Time.fixedDeltaTime);
 		actionMap.update(Time.fixedDeltaTime);
-		float maxdd = range * range;
+		float maxdd = attackRange * attackRange;
 		if (canAttack()) {
 			foreach (Neighbour<Steering> otherUnitNeighbour in nearbyUnits) {
 				Unit otherUnit = otherUnitNeighbour.obj.GetComponent<Unit>();
@@ -350,6 +350,10 @@ public class Unit : MonoBehaviour, Attackable, Actor, ObjectWithPosition {
 	
 	private bool canCast() {
 		return !statusMap.has(State.ANIMATION);
+	}
+
+	public bool capableOfAttack() {
+		return !canTrade();
 	}
 	
 	public bool canAttack() {

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿	using UnityEngine;
 using System.Collections.Generic;
 
 public enum Tile {WATER=0, SHORE=1, GRASS=2, BUILDING=3, TEMP=4};
@@ -9,9 +9,11 @@ public class Map : MonoBehaviour {
     public GameObject treeObject;
 	public GameObject islandObject;
 
+	public bool hasBeenGenerated = false;
+
     // grid size
-	private int mapWidth;
-    private int mapHeight;
+	public int mapWidth;
+    public int mapHeight;
     private float tileSize = 1f;
 	
 	private List<List<Tile>> tileMap;
@@ -60,6 +62,7 @@ public class Map : MonoBehaviour {
 	}
 
 	public void generateMap(List<Player> players, int width=16, int height=16, int tilesBetweenIslands=2) {
+		hasBeenGenerated = true;
 		mapWidth = width;
 		mapHeight = height;
 		tileMap = new List<List<Tile>>();
